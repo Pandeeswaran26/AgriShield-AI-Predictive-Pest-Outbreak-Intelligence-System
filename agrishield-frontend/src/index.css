@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply text-slate-800 dark:text-slate-100 transition-colors duration-300;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-dark;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 dark:bg-surface-darkMuted/70 backdrop-blur-xl border border-white/60 dark:border-surface-darkBorder rounded-2xl shadow-glass dark:shadow-glass-dark;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-surface-border dark:border-surface-darkBorder bg-white dark:bg-surface-darkMuted px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-all hover:border-primary-400 hover:text-primary-700 dark:hover:text-primary-400 active:scale-[0.98];
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-surface-border dark:border-surface-darkBorder bg-white dark:bg-surface-darkMuted px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all;
+  }
+
+  .section-eyebrow {
+    @apply font-mono text-xs uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-xl bg-slate-200 dark:bg-surface-darkBorder;
+  }
+}

@@ -1,0 +1,7 @@
+Model,MAE,RMSE,R2,Training Time (sec)
+Extra Trees,12.648,48.47,0.54,0.96
+CatBoost,16.818,59.343,0.31,1.71
+LightGBM,18.333,63.523,0.209,3.25
+XGBoost,18.268,65.305,0.164,0.08
+Random Forest,16.38,69.445,0.055,2.03
+Gradient Boosting,19.543,71.09,0.009,0.58
