@@ -1,46 +1,22 @@
-  import api from "./api";
+import api from "./api";
 
-  /**
-   * Payload shape expected by the FastAPI /predict endpoint.
-   * Field names mirror the columns the ExtraTreesRegressor was trained on
-   * (see train_final_model.py / advanced_feature_engineering.py):
-   * Crop, Pest_Name, Location, Observation Year, Standard Week,
-   * MaxT, MinT, RH1(%), RH2(%), RF(mm), WS(kmph), SSH(hrs), EVP(mm).
-   */
-  export const predictService = {
-    predict: (formValues) => {
-      const payload = {
-  Crop: formValues.crop,
-  Pest_Name: formValues.pestName,
-  Location: formValues.location,
+export const predictPest = (payload) => api.post("/predict", payload).then((r) => r.data);
 
-  Observation_Year: Number(formValues.observationYear),
-  Standard_Week: Number(formValues.standardWeek),
-
-  MaxT: Number(formValues.maxTemperature),
-  MinT: Number(formValues.minTemperature),
-
-  RH1: Number(formValues.humidity1),
-  RH2: Number(formValues.humidity2),
-
-  RF: Number(formValues.rainfall),
-  WS: Number(formValues.windSpeed),
-
-  SSH: Number(formValues.sunshineHours),
-  EVP: Number(formValues.evaporation),
+export const predictPestAuto = (cropOrPayload, latitude, longitude) => {
+  const payload =
+    typeof cropOrPayload === "object" && cropOrPayload !== null
+      ? cropOrPayload
+      : {
+          Crop: cropOrPayload,
+          Latitude: latitude,
+          Longitude: longitude,
+        };
+  return api.post("/predict/auto", payload).then((r) => r.data);
 };
-      console.log(payload);
-      return api.post("/predict", payload).then((res) => res.data);
-    },
 
-    // SHAP-based explanation for a given prediction id.
-    explain: (predictionId) =>
-      api.get(`/predict/${predictionId}/explain`).then((res) => res.data),
+export const explainPrediction = (id) =>
+  api.get(`/predict/${id}/explain`).then((r) => r.data);
 
-    downloadReport: (predictionId) =>
-      api
-        .get(`/predict/${predictionId}/report`, { responseType: "blob" })
-        .then((res) => res.data),
-  };
+export const downloadReport = (id) =>
+  api.get(`/predict/${id}/report`, { responseType: "blob" }).then((r) => r.data);
 
-  export default predictService;

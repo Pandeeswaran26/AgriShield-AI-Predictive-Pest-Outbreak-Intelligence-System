@@ -2,43 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-  }
-  body {
-    @apply text-slate-800 dark:text-slate-100 transition-colors duration-300;
-  }
-  h1, h2, h3, h4 {
-    @apply font-display;
-  }
-  :focus-visible {
-    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-surface-dark;
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-mist text-field-900 dark:bg-field-900 dark:text-mist font-body antialiased;
+}
+
+h1, h2, h3, h4 {
+  @apply font-display;
+}
+
+::selection {
+  background: rgba(34, 197, 94, 0.35);
+}
+
+/* visible keyboard focus, everywhere */
+:focus-visible {
+  outline: 2px solid #22C55E;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-@layer components {
-  .glass-card {
-    @apply bg-white/70 dark:bg-surface-darkMuted/70 backdrop-blur-xl border border-white/60 dark:border-surface-darkBorder rounded-2xl shadow-glass dark:shadow-glass-dark;
-  }
+.field-lines {
+  background-image: repeating-linear-gradient(0deg, rgba(34,197,94,0.08) 0px, rgba(34,197,94,0.08) 1px, transparent 1px, transparent 26px);
+}
 
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
-  }
+.card {
+  @apply bg-white dark:bg-field-800 border border-field-900/10 dark:border-mist/10 rounded-2xl;
+}
 
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-surface-border dark:border-surface-darkBorder bg-white dark:bg-surface-darkMuted px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition-all hover:border-primary-400 hover:text-primary-700 dark:hover:text-primary-400 active:scale-[0.98];
-  }
+.input {
+  @apply w-full rounded-xl border border-field-900/15 dark:border-mist/15 bg-white dark:bg-field-900
+    px-4 py-2.5 text-sm outline-none transition focus:border-canopy focus:ring-2 focus:ring-canopy/25
+    placeholder:text-field-900/40 dark:placeholder:text-mist/40;
+}
 
-  .input-field {
-    @apply w-full rounded-xl border border-surface-border dark:border-surface-darkBorder bg-white dark:bg-surface-darkMuted px-4 py-2.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all;
-  }
+.label {
+  @apply block text-xs font-semibold uppercase tracking-wide text-field-900/60 dark:text-mist/60 mb-1.5;
+}
 
-  .section-eyebrow {
-    @apply font-mono text-xs uppercase tracking-[0.2em] text-primary-600 dark:text-primary-400;
-  }
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-canopy px-5 py-2.5 text-sm font-semibold text-field-950
+    transition hover:bg-canopy-600 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+}
 
-  .skeleton {
-    @apply animate-pulse rounded-xl bg-slate-200 dark:bg-surface-darkBorder;
-  }
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-field-900/15 dark:border-mist/15 px-5 py-2.5
+    text-sm font-semibold transition hover:border-canopy hover:text-canopy disabled:opacity-50;
 }

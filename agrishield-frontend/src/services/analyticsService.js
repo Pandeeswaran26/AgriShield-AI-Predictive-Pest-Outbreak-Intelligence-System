@@ -1,20 +1,14 @@
 import api from "./api";
 
-export const analyticsService = {
-  getPredictionTrends: (params = {}) =>
-    api.get("/analytics/prediction-trends", { params }).then((res) => res.data),
+export const getPredictionTrends = () =>
+  api.get("/analytics/prediction-trends").then((r) => r.data);
 
-  getCropAnalysis: (params = {}) =>
-    api.get("/analytics/crop-analysis", { params }).then((res) => res.data),
+export const getCropAnalysis = () => api.get("/analytics/crop-analysis").then((r) => r.data);
 
-  getWeatherImpact: (params = {}) =>
-    api.get("/analytics/weather-impact", { params }).then((res) => res.data),
+export const getWeatherImpact = () => api.get("/analytics/weather-impact").then((r) => r.data);
 
-  getLocationAnalysis: (params = {}) =>
-    api.get("/analytics/location-analysis", { params }).then((res) => res.data),
+export const getLocationAnalysis = () =>
+  api.get("/analytics/location-analysis").then((r) => r.data);
 
-  getRiskDistribution: (params = {}) =>
-    api.get("/analytics/risk-distribution", { params }).then((res) => res.data),
-};
-
-export default analyticsService;
+export const getRiskDistribution = () =>
+  api.get("/analytics/risk-distribution").then((r) => r.data);

@@ -1,32 +1,28 @@
 import axios from "axios";
 
-// Base Axios instance pointed at the FastAPI backend.
-// In dev, Vite proxies /api to http://localhost:8000 (see vite.config.js).
-export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
-  headers: {
-    "Content-Type": "application/json",
-  },
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
 });
 
-export function setAuthToken(token) {
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("agrishield_token");
   if (token) {
-    api.defaults.headers.common.Authorization = `Bearer ${token}`;
-  } else {
-    delete api.defaults.headers.common.Authorization;
+    config.headers.Authorization = `Bearer ${token}`;
   }
-}
+  return config;
+});
 
-// Normalizes FastAPI error payloads (which usually come back as { detail }).
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
-      error.response?.data?.detail ||
-      error.response?.data?.message ||
-      error.message ||
-      "Something went wrong. Please try again.";
-    return Promise.reject(new Error(message));
+    if (error.response?.status === 401) {
+      localStorage.removeItem("agrishield_token");
+      localStorage.removeItem("agrishield_user");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
   }
 );
 

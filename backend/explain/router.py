@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from database.database import get_db
 from .service import explain_prediction
 
 router = APIRouter(
@@ -9,18 +11,13 @@ router = APIRouter(
 
 
 @router.get("/{prediction_id}/explain")
-def explain(prediction_id: int):
+def explain(prediction_id: int, db: Session = Depends(get_db)):
+    result = explain_prediction(db, prediction_id)
 
-    # Replace this later with actual prediction data from DB
-    sample = {
-        "Temperature": 31,
-        "Humidity": 78,
-        "Rainfall": 110,
-        "Soil_Moisture": 42,
-        "Crop_Stress_Indicator": 0.62
-    }
+    if result is None:
+        raise HTTPException(status_code=404, detail="Prediction not found")
 
     return {
         "prediction_id": prediction_id,
-        "explanation": explain_prediction(sample)
+        "explanation": result
     }

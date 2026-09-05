@@ -1,52 +1,65 @@
-import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-import MainLayout from "./layouts/MainLayout";
+import PublicLayout from "./layouts/PublicLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
-import ProtectedRoute from "./components/common/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-import LandingPage from "./pages/LandingPage";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
-import DashboardPage from "./pages/DashboardPage";
-import PredictionPage from "./pages/PredictionPage";
-import RecommendationPage from "./pages/RecommendationPage";
-import HistoryPage from "./pages/HistoryPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import SettingsPage from "./pages/SettingsPage";
-import NotFoundPage from "./pages/NotFoundPage";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import Predict from "./pages/Predict";
+import Recommendation from "./pages/Recommendation";
+import History from "./pages/History";
+import Analytics from "./pages/Analytics";
+import Assistant from "./pages/Assistant";
+import Settings from "./pages/Settings";
 
 export default function App() {
+  useEffect(() => {
+    const dark = localStorage.getItem("agrishield_theme") !== "light";
+    document.documentElement.classList.toggle("dark", dark);
+  }, []);
+
   return (
     <>
-      <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: { background: "#101D18", color: "#F5F7F5", fontSize: "13px" },
+          success: { iconTheme: { primary: "#22C55E", secondary: "#101D18" } },
+          error: { iconTheme: { primary: "#DC2626", secondary: "#101D18" } },
+        }}
+      />
       <Routes>
-        {/* Public marketing pages */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<LandingPage />} />
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Landing />} />
         </Route>
 
-        {/* Auth pages (no shared chrome) */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Authenticated app */}
         <Route
+          path="/app"
           element={
             <ProtectedRoute>
               <DashboardLayout />
             </ProtectedRoute>
           }
         >
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/predict" element={<PredictionPage />} />
-          <Route path="/recommendation" element={<RecommendationPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="predict" element={<Predict />} />
+          <Route path="recommendation" element={<Recommendation />} />
+          <Route path="history" element={<History />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="assistant" element={<Assistant />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

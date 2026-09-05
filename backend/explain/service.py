@@ -1,31 +1,59 @@
+from types import SimpleNamespace
+
 import shap
-import pandas as pd
+from sqlalchemy.orm import Session
 
 from app.model_loader import model
+from app.prediction import build_features
+from history.models import PredictionHistory
+
+_explainer = None
 
 
-explainer = shap.TreeExplainer(model)
+def get_explainer():
+    global _explainer
+    if _explainer is None:
+        _explainer = shap.TreeExplainer(model)
+    return _explainer
 
 
-def explain_prediction(input_data: dict):
+def explain_prediction(db: Session, prediction_id: int):
+    record = (
+        db.query(PredictionHistory)
+        .filter(PredictionHistory.id == prediction_id)
+        .first()
+    )
 
-    df = pd.DataFrame([input_data])
+    if not record:
+        return None
 
-    shap_values = explainer.shap_values(df)
+    data = SimpleNamespace(
+        Crop=record.crop,
+        Pest_Name=record.pest_name,
+        Location=record.location,
+        Observation_Year=record.observation_year,
+        Standard_Week=record.standard_week,
+        MaxT=record.max_t,
+        MinT=record.min_t,
+        RH1=record.rh1,
+        RH2=record.rh2,
+        RF=record.rf,
+        WS=record.ws,
+        SSH=record.ssh,
+        EVP=record.evp,
+    )
 
-    feature_importance = []
+    X = build_features(data)
 
+    explainer_instance = get_explainer()
+    shap_values = explainer_instance.shap_values(X)
     values = shap_values[0] if isinstance(shap_values, list) else shap_values
 
-    for feature, value in zip(df.columns, values[0]):
-        feature_importance.append({
-            "feature": feature,
-            "impact": float(value)
-        })
+    feature_importance = [
+        {"feature": feature, "impact": float(value)}
+        for feature, value in zip(X.columns, values[0])
+    ]
 
-    feature_importance.sort(
-        key=lambda x: abs(x["impact"]),
-        reverse=True
-    )
+    feature_importance.sort(key=lambda x: abs(x["impact"]), reverse=True)
 
     return feature_importance

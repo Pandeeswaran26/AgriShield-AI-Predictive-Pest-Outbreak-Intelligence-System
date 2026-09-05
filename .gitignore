@@ -11,6 +11,7 @@ ENV/
 env/
 .env
 .env.*
+!.env.example
 .pytest_cache/
 htmlcov/
 .coverage
@@ -74,6 +75,12 @@ desktop.ini
 *.db-journal
 *.log
 outputs/
+
+# Data and model artifacts
+datasets/
+catboost_info/
+backend/app/models/
+ml/models/
 
 # Build outputs
 build/

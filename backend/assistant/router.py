@@ -11,7 +11,6 @@ router = APIRouter(
 
 @router.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest):
-
-    reply = get_ai_response(request.message)
-
+    history_dicts = [{"role": m.role, "content": m.content} for m in request.history] if request.history else []
+    reply = get_ai_response(request.message, history=history_dicts)
     return ChatResponse(reply=reply)

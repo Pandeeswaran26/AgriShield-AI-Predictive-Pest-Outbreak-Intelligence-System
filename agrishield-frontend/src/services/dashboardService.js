@@ -1,19 +1,15 @@
 import api from "./api";
 
-export const dashboardService = {
-  getSummary: () => api.get("/dashboard/summary").then((res) => res.data),
+export const getSummary = () => api.get("/dashboard/summary").then((r) => r.data);
 
-  getPestTrend: (range = "30d") =>
-    api.get("/dashboard/pest-trend", { params: { range } }).then((res) => res.data),
+export const getLatestPrediction = () => api.get("/dashboard/latest").then((r) => r.data);
 
-  getWeatherTrend: (range = "30d") =>
-    api.get("/dashboard/weather-trend", { params: { range } }).then((res) => res.data),
+export const getPestTrend = () => api.get("/dashboard/pest-trend").then((r) => r.data);
 
-  getMonthlyPredictions: () =>
-    api.get("/dashboard/monthly-predictions").then((res) => res.data),
+export const getWeatherTrend = () => api.get("/dashboard/weather-trend").then((r) => r.data);
 
-  getCropAnalysis: () =>
-    api.get("/dashboard/crop-analysis").then((res) => res.data),
-};
+export const getMonthlyPredictions = () =>
+  api.get("/dashboard/monthly-predictions").then((r) => r.data);
 
-export default dashboardService;
+export const getCropAnalysis = () => api.get("/dashboard/crop-analysis").then((r) => r.data);
+

@@ -1,38 +1,86 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { setAuthToken } from "../services/api";
+import * as authService from "../services/authService";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const raw = localStorage.getItem("agrishield_user");
+    return raw ? JSON.parse(raw) : null;
+  });
+  const [token, setToken] = useState(() => localStorage.getItem("agrishield_token"));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("agrishield-user");
-    const token = window.localStorage.getItem("agrishield-token");
-    if (stored && token) {
-      setUser(JSON.parse(stored));
-      setAuthToken(token);
+    // Confirm the stored token is still valid on load.
+    if (!token) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
-  }, []);
+    authService
+      .getMe()
+      .then((data) => {
+        const nextUser = {
+          user_id: data.user_id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          location: data.location,
+        };
+        setUser(nextUser);
+        localStorage.setItem("agrishield_user", JSON.stringify(nextUser));
+      })
+      .catch(() => {
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem("agrishield_token");
+        localStorage.removeItem("agrishield_user");
+      })
+      .finally(() => setLoading(false));
+  }, [token]);
 
-  const login = ({ user: userData, token }) => {
-    window.localStorage.setItem("agrishield-user", JSON.stringify(userData));
-    window.localStorage.setItem("agrishield-token", token);
-    setAuthToken(token);
-    setUser(userData);
+  const applySession = (data) => {
+    const nextUser = {
+      user_id: data.user_id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      location: data.location,
+    };
+    localStorage.setItem("agrishield_token", data.token);
+    localStorage.setItem("agrishield_user", JSON.stringify(nextUser));
+    setToken(data.token);
+    setUser(nextUser);
   };
 
-  const logout = () => {
-    window.localStorage.removeItem("agrishield-user");
-    window.localStorage.removeItem("agrishield-token");
-    setAuthToken(null);
+  const login = async (email, password) => {
+    const data = await authService.login({ email, password });
+    applySession(data);
+    return data;
+  };
+
+  const verifyOtp = async (email, otp) => {
+    const data = await authService.verifyOtp({ email, otp });
+    applySession(data);
+    return data;
+  };
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Token may already be invalid — clear local session regardless.
+    }
+    localStorage.removeItem("agrishield_token");
+    localStorage.removeItem("agrishield_user");
+    setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, verifyOtp, logout, isAuthenticated: !!token }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -40,6 +88,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
+  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }

@@ -1,6 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
+from database.database import get_db
 from .service import generate_prediction_report
 
 router = APIRouter(
@@ -10,9 +12,11 @@ router = APIRouter(
 
 
 @router.get("/{prediction_id}/report")
-def prediction_report(prediction_id: int):
+def prediction_report(prediction_id: int, db: Session = Depends(get_db)):
+    pdf = generate_prediction_report(db, prediction_id)
 
-    pdf = generate_prediction_report(prediction_id)
+    if pdf is None:
+        raise HTTPException(status_code=404, detail="Prediction not found")
 
     return StreamingResponse(
         pdf,

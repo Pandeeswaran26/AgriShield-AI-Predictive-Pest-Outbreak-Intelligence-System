@@ -9,6 +9,7 @@ from .service import (
     weather_trend,
     monthly_predictions,
     crop_analysis,
+    get_latest_prediction_card,
 )
 
 router = APIRouter(
@@ -20,6 +21,11 @@ router = APIRouter(
 @router.get("/summary")
 def summary(db: Session = Depends(get_db)):
     return get_dashboard_summary(db)
+
+
+@router.get("/latest")
+def latest_prediction(db: Session = Depends(get_db)):
+    return get_latest_prediction_card(db)
 
 
 @router.get("/pest-trend")
@@ -39,4 +45,4 @@ def get_monthly_predictions(db: Session = Depends(get_db)):
 
 @router.get("/crop-analysis")
 def get_crop_analysis(db: Session = Depends(get_db)):
-    return crop_analysis(db)
+    return crop_analysis(db)
