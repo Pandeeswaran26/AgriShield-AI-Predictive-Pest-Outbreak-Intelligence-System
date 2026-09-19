@@ -210,3 +210,87 @@ def get_latest_prediction_card(db: Session):
             "ws": latest.ws,
         },
     }
+
+
+def get_farmer_fields_overview(db: Session, user_id: int | None = None):
+    """
+    Returns an operational overview of the farmer's actual registered fields,
+    complete with dynamic DAP, growth stages, last assessment health, risk level,
+    and next prioritized action.
+    """
+    from plants.models import Plant
+    from plants.service import get_user_plants
+    from diagnosis.models import PlantDiagnosisRecord
+    from agronomy.growth_stage import calculate_growth_stage
+
+    if user_id:
+        plants = get_user_plants(db, user_id)
+    else:
+        plants = db.query(Plant).order_by(Plant.updated_at.desc()).limit(10).all()
+
+    fields_overview = []
+    for plant in plants:
+        # Calculate growth stage
+        stage_info = calculate_growth_stage(plant.planting_date, plant.crop_type)
+
+        # Check latest prediction record
+        latest_pred = (
+            db.query(PredictionHistory)
+            .filter(PredictionHistory.plant_id == plant.id)
+            .order_by(PredictionHistory.prediction_date.desc())
+            .first()
+        )
+        if not latest_pred:
+            # Fallback to crop match if plant_id wasn't set on legacy rows
+            latest_pred = (
+                db.query(PredictionHistory)
+                .filter(PredictionHistory.crop.ilike(f"%{plant.crop_type}%"))
+                .order_by(PredictionHistory.prediction_date.desc())
+                .first()
+            )
+
+        # Check latest plant leaf diagnosis
+        latest_diag = (
+            db.query(PlantDiagnosisRecord)
+            .filter(PlantDiagnosisRecord.crop_name.ilike(f"%{plant.crop_type}%"))
+            .order_by(PlantDiagnosisRecord.created_at.desc())
+            .first()
+        )
+
+        health_status = plant.last_health_status or (latest_pred.health_status if latest_pred else "Healthy")
+        risk_level = plant.last_risk_level or (latest_pred.risk_level if latest_pred else "Low")
+        next_action = plant.last_recommended_action or "Routine crop surveillance and moisture monitoring."
+
+        fields_overview.append({
+            "id": plant.id,
+            "name": plant.name,
+            "crop_type": plant.crop_type,
+            "variety": plant.variety or "Standard",
+            "field_name": plant.field_name or "Primary Field",
+            "field_size": plant.field_size or 2.0,
+            "field_size_unit": plant.field_size_unit or "acres",
+            "planting_date": plant.planting_date,
+            "days_after_planting": stage_info.get("days_after_planting", 30),
+            "growth_stage": plant.growth_stage or stage_info.get("growth_stage", "Vegetative"),
+            "growth_stage_details": stage_info,
+            "water_demand": stage_info.get("water_demand", "Medium"),
+            "irrigation_method": getattr(plant, "irrigation_method", "Furrow / Basin"),
+            "soil_type": plant.soil_type or "Clay Loam",
+            "soil_moisture": plant.soil_moisture or 60.0,
+            "soil_ph": plant.soil_ph or 6.5,
+            "latitude": plant.latitude or 11.0168,
+            "longitude": plant.longitude or 76.9558,
+            "location_name": plant.location_name or "Field Station",
+            "health_status": health_status,
+            "risk_level": risk_level,
+            "next_action": next_action,
+            "last_assessment_date": plant.last_assessment_date.isoformat() if getattr(plant, "last_assessment_date", None) else (latest_pred.prediction_date.isoformat() if latest_pred and latest_pred.prediction_date else None),
+            "last_diagnosis": {
+                "disease_name": latest_diag.disease_name,
+                "confidence": latest_diag.confidence,
+                "is_healthy": latest_diag.is_healthy,
+                "created_at": latest_diag.created_at.isoformat() if latest_diag.created_at else None,
+            } if latest_diag else None,
+        })
+
+    return fields_overview

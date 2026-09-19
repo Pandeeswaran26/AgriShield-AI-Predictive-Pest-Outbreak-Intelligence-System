@@ -36,14 +36,20 @@ class AutoPredictionRequest(BaseModel):
     plant_id: Optional[int] = None
     plant_name: Optional[str] = None
     crop_variety: Optional[str] = None
+    planting_date: Optional[str] = None
     growth_stage: Optional[str] = None
     field_name: Optional[str] = None
     field_size: Optional[float] = None
     field_size_unit: Optional[str] = "acres"
+    irrigation_method: Optional[str] = None
     soil_type: Optional[str] = None
     soil_moisture: Optional[float] = None
     soil_ph: Optional[float] = None
+    soil_n: Optional[float] = None
+    soil_p: Optional[float] = None
+    soil_k: Optional[float] = None
     location_name: Optional[str] = None
+    diagnosis_id: Optional[int] = None
 
 
 class PredictionResponse(BaseModel):

@@ -16,6 +16,8 @@ import History from "./pages/History";
 import Analytics from "./pages/Analytics";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
+import PlantDiagnosis from "./pages/PlantDiagnosis";
+
 
 export default function App() {
   useEffect(() => {
@@ -51,7 +53,9 @@ export default function App() {
         >
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="diagnosis" element={<PlantDiagnosis />} />
           <Route path="predict" element={<Predict />} />
+
           <Route path="recommendation" element={<Recommendation />} />
           <Route path="history" element={<History />} />
           <Route path="analytics" element={<Analytics />} />

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -22,43 +22,63 @@ import {
   ShieldAlert,
   ClipboardList,
   Layers,
+  Camera,
+  Calendar,
+  Sprout,
+  Plus,
+  Compass,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import StatCard from "../components/StatCard";
 import RiskBadge from "../components/RiskBadge";
 import LoadingSpinner from "../components/LoadingSpinner";
-import ForecastRiskChart from "../components/ForecastRiskChart";
+import PlantModal from "../components/PlantModal";
 import { useAuth } from "../context/AuthContext";
 import * as dashboardService from "../services/dashboardService";
 import * as weatherService from "../services/weatherService";
+import * as plantService from "../services/plantService";
+import toast from "react-hot-toast";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [summary, setSummary] = useState(null);
+  const [fields, setFields] = useState([]);
   const [latestPrediction, setLatestPrediction] = useState(null);
   const [pestTrend, setPestTrend] = useState([]);
   const [cropAnalysis, setCropAnalysis] = useState([]);
-  const [monthly, setMonthly] = useState([]);
   const [weatherSnapshot, setWeatherSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Plant Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = () => {
+    setLoading(true);
     Promise.all([
-      dashboardService.getSummary(),
+      dashboardService.getSummary().catch(() => null),
+      dashboardService.getFieldsOverview().catch(() => []),
       dashboardService.getLatestPrediction().catch(() => null),
-      dashboardService.getPestTrend(),
-      dashboardService.getCropAnalysis(),
-      dashboardService.getMonthlyPredictions(),
+      dashboardService.getPestTrend().catch(() => []),
+      dashboardService.getCropAnalysis().catch(() => []),
     ])
-      .then(([s, latest, p, c, m]) => {
+      .then(([s, f, latest, p, c]) => {
         setSummary(s);
+        setFields(Array.isArray(f) ? f : []);
         setLatestPrediction(latest);
         setPestTrend(p);
         setCropAnalysis(c);
-        setMonthly(m);
       })
       .finally(() => setLoading(false));
 
-    // Try auto-fetching weather snapshot for dashboard widget
+    // Try auto-fetching live weather snapshot for local coordinates
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -68,7 +88,6 @@ export default function Dashboard() {
             .catch(() => {});
         },
         () => {
-          // Default station fallback
           weatherService
             .getWeatherForCoordinates(11.0168, 76.9558)
             .then(setWeatherSnapshot)
@@ -76,271 +95,351 @@ export default function Dashboard() {
         }
       );
     }
-  }, []);
+  };
 
-  if (loading) return <LoadingSpinner label="Loading dashboard" />;
+  const handleCreatePlant = async (payload) => {
+    try {
+      await plantService.createPlant(payload);
+      toast.success("New field registered successfully!");
+      loadDashboardData();
+    } catch {
+      toast.error("Failed to register field.");
+    }
+  };
+
+  if (loading) return <LoadingSpinner label="Loading Agricultural Decision Dashboard" />;
 
   const weather = weatherSnapshot?.weather;
   const loc = weatherSnapshot?.location;
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Welcome Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <Sprout size={13} />
+            Agricultural Decision-Support System
+          </div>
           <h1 className="font-display text-2xl md:text-3xl font-bold text-slate-100 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-emerald-400" />
             Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
           </h1>
           <p className="mt-1 text-sm text-slate-400">
-            Real-time agricultural surveillance & pest intelligence overview.
+            Real-time crop surveillance, meteorological intelligence, and actionable farm decisions.
           </p>
         </div>
-        <Link
-          to="/app/predict"
-          className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2"
-        >
-          <ScanLine size={17} /> Analyze Field Outbreak
-        </Link>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-sm transition flex items-center gap-2 shadow-sm"
+          >
+            <Plus size={16} className="text-emerald-400" /> Add New Field
+          </button>
+          <Link
+            to="/app/diagnosis"
+            className="py-2.5 px-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-semibold text-sm transition flex items-center gap-2 shadow-sm"
+          >
+            <Camera size={16} /> Scan Plant Leaf
+          </Link>
+          <Link
+            to="/app/predict"
+            className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition flex items-center gap-2"
+          >
+            <ScanLine size={16} /> Run Crop Assessment
+          </Link>
+        </div>
       </div>
 
-      {/* Top Banner: Weather Telemetry Widget + Latest Outbreak Card */}
+      {/* Top Banner: Regional Weather Telemetry + Quick System Telemetry */}
       <div className="grid lg:grid-cols-3 gap-5">
-        {/* Weather Telemetry Widget */}
+        {/* Live Weather Telemetry Widget */}
         <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <CloudSun className="w-4 h-4 text-emerald-400" />
-                Live Atmospheric Telemetry
-              </span>
-              <span className="text-[11px] text-emerald-400 font-mono">Open-Meteo API</span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-3">
-              <MapPin className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="truncate">{loc?.name || "Local Research Center"}</span>
-            </div>
-
-            {weather ? (
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-2 text-slate-300">
-                  <Thermometer className="w-4 h-4 text-amber-400 shrink-0" />
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Temperature</span>
-                    <span className="font-bold">{weather.MaxT}°C</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-2 text-slate-300">
-                  <Droplets className="w-4 h-4 text-sky-400 shrink-0" />
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Humidity</span>
-                    <span className="font-bold">{weather.RH1}%</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-2 text-slate-300">
-                  <CloudRain className="w-4 h-4 text-teal-400 shrink-0" />
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Precipitation</span>
-                    <span className="font-bold">{weather.RF} mm</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-2 text-slate-300">
-                  <Wind className="w-4 h-4 text-slate-400 shrink-0" />
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Wind Velocity</span>
-                    <span className="font-bold">{weather.WS} km/h</span>
-                  </div>
-                </div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CloudSun className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-semibold text-slate-200 text-sm">Live Field Telemetry</h3>
               </div>
-            ) : (
-              <div className="p-4 text-center text-xs text-slate-500">Syncing live climate data...</div>
-            )}
-          </div>
-
-          <p className="text-[11px] text-slate-500 pt-3 border-t border-slate-800/80 mt-3">
-            Real-time feed drives pest incubation likelihood index
-          </p>
-        </div>
-
-        {/* Latest Prediction Outbreak Card */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <ShieldAlert className="w-4 h-4 text-amber-400" />
-                Latest Field Surveillance Status
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                LIVE WEATHER (OPEN-METEO)
               </span>
-              {latestPrediction && <RiskBadge risk={latestPrediction.risk_level} />}
             </div>
 
-            {latestPrediction ? (
-              <div className="space-y-2.5 mt-2">
-                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-                  <h3 className="text-lg md:text-xl font-bold text-slate-100">
-                    {latestPrediction.crop}: {latestPrediction.pest_name}
-                  </h3>
-                  <span className="text-xs text-slate-400">
-                    Severity Index: <strong className="text-slate-200">{latestPrediction.pest_value}</strong>
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Surveillance recorded for <strong>{latestPrediction.location_display}</strong>.
-                  {latestPrediction.pests_ranked?.length > 1 && (
-                    <span>
-                      {" "}
-                      Evaluated across <strong>{latestPrediction.pests_ranked.length}</strong> co-occurring
-                      pest species.
-                    </span>
-                  )}
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-3xl font-extrabold text-slate-100">
+                  {weather?.MaxT ? `${Math.round(weather.MaxT)}°C` : "--°C"}
                 </p>
+                <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  {loc?.name || "Field Station Location"}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/60 text-xs font-medium text-emerald-300">
+                  {weather?.RF > 5 ? "Rain Expected" : weather?.WS > 15 ? "Windy" : "Optimal Conditions"}
+                </span>
+              </div>
+            </div>
+          </div>
 
-                {/* Micro tags */}
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <span className="px-2.5 py-1 rounded-md bg-slate-950 border border-slate-800 text-[11px] text-slate-300">
-                    Crop: <strong>{latestPrediction.crop}</strong>
-                  </span>
-                  <span className="px-2.5 py-1 rounded-md bg-slate-950 border border-slate-800 text-[11px] text-slate-300">
-                    Station: <strong>{latestPrediction.location}</strong>
-                  </span>
-                  {latestPrediction.confidence && (
-                    <span className="px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300">
-                      Model Confidence: <strong>{latestPrediction.confidence}%</strong>
-                    </span>
+          <div className="grid grid-cols-4 gap-2 pt-4 border-t border-slate-800/80 mt-4 text-center">
+            <div className="p-2 rounded-xl bg-slate-950/40 border border-slate-800">
+              <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                <Thermometer size={10} className="text-rose-400" /> High/Low
+              </div>
+              <p className="text-xs font-bold text-slate-200 mt-0.5">
+                {weather?.MaxT ? `${Math.round(weather.MaxT)}°/${Math.round(weather.MinT || 22)}°` : "—"}
+              </p>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/40 border border-slate-800">
+              <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                <Droplets size={10} className="text-cyan-400" /> Humidity
+              </div>
+              <p className="text-xs font-bold text-slate-200 mt-0.5">
+                {weather?.RH1 ? `${Math.round(weather.RH1)}%` : "—"}
+              </p>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/40 border border-slate-800">
+              <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                <CloudRain size={10} className="text-blue-400" /> Rain
+              </div>
+              <p className="text-xs font-bold text-slate-200 mt-0.5">
+                {weather?.RF !== undefined ? `${weather.RF} mm` : "—"}
+              </p>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/40 border border-slate-800">
+              <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1">
+                <Wind size={10} className="text-teal-400" /> Wind
+              </div>
+              <p className="text-xs font-bold text-slate-200 mt-0.5">
+                {weather?.WS ? `${weather.WS} km/h` : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Aggregate Surveillance Statistics */}
+        <div className="lg:col-span-2 grid sm:grid-cols-3 gap-4">
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between">
+            <div>
+              <span className="text-xs font-medium text-slate-400">Total Registered Fields</span>
+              <p className="text-2xl font-bold text-slate-100 mt-1">{fields.length}</p>
+            </div>
+            <div className="text-xs text-emerald-400 flex items-center gap-1 mt-3">
+              <Sprout size={14} /> Active Crop Portfolios
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between">
+            <div>
+              <span className="text-xs font-medium text-slate-400">High Risk Alerts</span>
+              <p className="text-2xl font-bold text-rose-400 mt-1">{summary?.highRisk || 0}</p>
+            </div>
+            <div className="text-xs text-rose-400/80 flex items-center gap-1 mt-3">
+              <ShieldAlert size={14} /> Immediate Action Required
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between">
+            <div>
+              <span className="text-xs font-medium text-slate-400">Crop Health Assessments</span>
+              <p className="text-2xl font-bold text-slate-100 mt-1">{summary?.totalPredictions || 0}</p>
+            </div>
+            <div className="text-xs text-slate-400 flex items-center gap-1 mt-3">
+              <Clock size={14} /> {summary?.todayPredictions || 0} evaluated today
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* Active Fields & Crops Surveillance Grid */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2 font-display">
+              <Layers className="w-5 h-5 text-emerald-400" />
+              My Fields & Crop Health Surveillance
+            </h2>
+            <p className="text-xs text-slate-400">
+              Operational overview of your registered fields, growth stages, health risks, and recommended actions.
+            </p>
+          </div>
+          <span className="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+            {fields.length} Field{fields.length === 1 ? "" : "s"} Monitored
+          </span>
+        </div>
+
+        {fields.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-slate-900/50 border border-slate-800 text-center space-y-3">
+            <Sprout className="w-12 h-12 text-slate-600 mx-auto" />
+            <h3 className="text-base font-bold text-slate-200">No Fields Registered Yet</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Add your farm plots, sowing dates, and location to activate continuous AI crop assessment and decision support.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition"
+            >
+              + Register Your First Field
+            </button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {fields.map((f) => (
+              <div
+                key={f.id}
+                className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-4 group"
+              >
+                {/* Field Header */}
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 mb-1.5">
+                        {f.crop_type} {f.variety ? `• ${f.variety}` : ""}
+                      </span>
+                      <h3 className="text-base font-bold text-slate-100 group-hover:text-emerald-300 transition">
+                        {f.name}
+                      </h3>
+                      <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                        <MapPin size={12} className="text-emerald-400 shrink-0" />
+                        <span className="truncate">{f.location_name || `${f.latitude}°N, ${f.longitude}°E`}</span>
+                      </p>
+                    </div>
+                    <RiskBadge level={f.risk_level || "Low"} />
+                  </div>
+
+                  {/* Growth Stage & DAP Tag */}
+                  <div className="mt-3 p-2.5 rounded-xl bg-slate-950/50 border border-slate-800/80 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Calendar size={12} className="text-emerald-400" />
+                        Age: <strong>{f.days_after_planting} Days (DAP)</strong>
+                      </span>
+                      <span className="text-emerald-300 font-semibold text-[11px] truncate max-w-[140px]">
+                        {f.growth_stage}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
+                      <span>Water Demand: <strong className="text-slate-300">{f.water_demand}</strong></span>
+                      <span>Area: <strong className="text-slate-300">{f.field_size} {f.field_size_unit}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Latest Diagnosis snippet if present */}
+                  {f.last_diagnosis && (
+                    <div className="mt-2.5 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/15 text-xs flex items-center justify-between">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <Camera size={12} className="text-emerald-400" /> Leaf Diagnosis:
+                      </span>
+                      <span className="font-semibold text-emerald-300 truncate max-w-[150px]">
+                        {f.last_diagnosis.disease_name} ({Math.round(f.last_diagnosis.confidence)}%)
+                      </span>
+                    </div>
                   )}
+
+                  {/* Next Prioritized Action Preview */}
+                  <div className="mt-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Next Recommended Action
+                    </span>
+                    <p className="text-xs text-slate-300 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800 line-clamp-2">
+                      {f.next_action || "Routine field inspection and soil moisture check."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Field Action Buttons */}
+                <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => navigate(`/app/predict?plantId=${f.id}`)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/10"
+                  >
+                    <ScanLine size={13} /> Run Assessment
+                  </button>
+                  <Link
+                    to="/app/recommendations"
+                    className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-semibold transition flex items-center gap-1"
+                  >
+                    <ClipboardList size={13} /> Actions
+                  </Link>
                 </div>
               </div>
-            ) : (
-              <div className="py-6 text-center text-xs text-slate-500">
-                No recent field prediction recorded. Click "Analyze Field Outbreak" to begin.
-              </div>
-            )}
+            ))}
           </div>
-
-          <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-3">
-            <Link
-              to="/app/history"
-              className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1"
-            >
-              Surveillance Log History →
-            </Link>
-            {latestPrediction && (
-              <Link
-                to={`/app/recommendation?id=${latestPrediction.id}`}
-                className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-              >
-                <ClipboardList className="w-3.5 h-3.5" /> View Active Treatment Plan
-              </Link>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* 7-Day Forecast Risk Chart if available on latest prediction */}
-      {latestPrediction?.forecast_risk?.length > 0 && (
-        <div>
-          <ForecastRiskChart data={latestPrediction.forecast_risk} />
-        </div>
-      )}
-
-      {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <StatCard label="Total Predictions" value={summary?.totalPredictions ?? 0} accent="sky" />
-        <StatCard label="High Risk Outbreaks" value={summary?.highRisk ?? 0} accent="alert" />
-        <StatCard label="Medium Risk Alerts" value={summary?.mediumRisk ?? 0} accent="clay" />
-        <StatCard label="Low Risk Baselines" value={summary?.lowRisk ?? 0} accent="canopy" />
-        <StatCard label="Today's Analyses" value={summary?.todayPredictions ?? 0} accent="sky" />
-      </div>
-
-      {/* Analytical Charts */}
-      <div className="grid gap-5 lg:grid-cols-2">
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* Outbreak Intelligence & Analytics Charts */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
-          <h2 className="font-semibold text-slate-200 text-sm md:text-base flex items-center gap-2 mb-4">
-            <Layers className="w-4 h-4 text-emerald-400" />
-            Historical Predictions by Pest Species
-          </h2>
+          <h3 className="font-bold text-slate-200 text-sm mb-1 flex items-center gap-2">
+            <ShieldAlert size={16} className="text-amber-400" />
+            Regional Pest Pressure Distribution
+          </h3>
+          <p className="text-xs text-slate-400 mb-4">Historical pest occurrences identified across surveillance rounds.</p>
           <div className="h-64">
-            {pestTrend.length ? (
+            {pestTrend && pestTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pestTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="pest" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
+                <BarChart data={pestTrend.slice(0, 7)} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="pest" stroke="#94a3b8" fontSize={10} interval={0} angle={-15} textAnchor="end" />
+                  <YAxis stroke="#94a3b8" fontSize={11} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "0.75rem", fontSize: "12px" }}
                   />
                   <Bar dataKey="value" fill="#10b981" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyState text="Pest frequency distribution will populate as predictions are logged." />
+              <div className="h-full flex items-center justify-center text-xs text-slate-400">
+                No surveillance data recorded yet.
+              </div>
             )}
           </div>
         </div>
 
         <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
-          <h2 className="font-semibold text-slate-200 text-sm md:text-base flex items-center gap-2 mb-4">
-            <Layers className="w-4 h-4 text-teal-400" />
-            Predictions by Crop Distribution
-          </h2>
+          <h3 className="font-bold text-slate-200 text-sm mb-1 flex items-center gap-2">
+            <Sprout size={16} className="text-emerald-400" />
+            Crops Under Protection
+          </h3>
+          <p className="text-xs text-slate-400 mb-4">Distribution of agricultural models active in AgriShield.</p>
           <div className="h-64">
-            {cropAnalysis.length ? (
+            {cropAnalysis && cropAnalysis.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={cropAnalysis}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="crop" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
+                <BarChart data={cropAnalysis} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis dataKey="crop" stroke="#94a3b8" fontSize={11} />
+                  <YAxis stroke="#94a3b8" fontSize={11} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
+                    contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "0.75rem", fontSize: "12px" }}
                   />
-                  <Bar dataKey="value" fill="#0d9488" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" fill="#06b6d4" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyState text="Crop distribution will populate as predictions are logged." />
+              <div className="h-full flex items-center justify-center text-xs text-slate-400">
+                No crops recorded yet.
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Monthly Activity */}
-      <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
-        <h2 className="font-semibold text-slate-200 text-sm md:text-base mb-4">
-          Monthly Outbreak Prediction Velocity
-        </h2>
-        <div className="h-56">
-          {monthly.length ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthly}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155", borderRadius: "8px" }}
-                />
-                <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyState text="Monthly trend velocity will plot over time." />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ text }) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-slate-500">
-      <p>{text}</p>
-      <Link to="/app/predict" className="inline-flex items-center gap-1 text-emerald-400 hover:underline font-semibold">
-        Launch First Prediction <ArrowRight size={13} />
-      </Link>
+      {/* Modal for adding plants */}
+      <PlantModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleCreatePlant}
+        defaultCoords={weatherSnapshot?.location ? { lat: weatherSnapshot.location.latitude, lon: weatherSnapshot.location.longitude } : null}
+        defaultLocationName={weatherSnapshot?.location?.name || ""}
+      />
     </div>
   );
 }

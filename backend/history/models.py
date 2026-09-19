@@ -49,6 +49,11 @@ class PredictionHistory(Base):
     # Smart advisory as JSON string: {irrigation, fertilizer, pest_management, urgency}
     advisory_json = Column(Text, nullable=True)
 
+    # Decision Engine & Assessment Linkage
+    diagnosis_id = Column(Integer, nullable=True)
+    health_status = Column(String, nullable=True)
+    data_sources_json = Column(Text, nullable=True)
+
     # Raw inputs — stored so /explain and /report can rebuild the
     # exact feature vector used for this prediction later.
     observation_year = Column(Integer, nullable=True)

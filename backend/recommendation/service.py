@@ -253,30 +253,83 @@ def get_recommendation(prediction_id: int, db: Session):
     if not record:
         return None
 
-    # If already stored as JSON in advisory_json, return it
+    from agronomy.growth_stage import calculate_growth_stage
+    from agronomy.decision_engine import evaluate_crop_health_and_risk
+    from agronomy.recommendation_engine import generate_structured_recommendations
+
+    # If already stored as JSON in advisory_json, return it (enriching if structured_recommendations missing)
     if record.advisory_json:
         try:
             stored = json.loads(record.advisory_json)
             stored["predictionId"] = prediction_id
-            return stored
+            if "structured_recommendations" in stored:
+                return stored
         except Exception:
-            pass
+            stored = {}
+    else:
+        stored = {}
 
     risk = record.risk_level or "Medium"
     weather_dict = {
-        "MaxT": record.max_t,
-        "MinT": record.min_t,
-        "RH1": record.rh1,
-        "RH2": record.rh2,
-        "RF": record.rf,
-        "WS": record.ws,
-        "SSH": record.ssh,
-        "EVP": record.evp,
+        "MaxT": record.max_t or 30.0,
+        "MinT": record.min_t or 22.0,
+        "RH1": record.rh1 or 70.0,
+        "RH2": record.rh2 or 50.0,
+        "RF": record.rf or 0.0,
+        "WS": record.ws or 5.0,
+        "SSH": record.ssh or 5.0,
+        "EVP": record.evp or 4.0,
     }
 
+    growth_stage_info = calculate_growth_stage(
+        planting_date_str=getattr(record, "planting_date", None),
+        crop_name=record.crop or "Rice",
+    )
+
+    soil_data = {
+        "soil_type": record.soil_type or "Loam",
+        "soil_moisture": record.soil_moisture,
+        "soil_ph": record.soil_ph,
+        "soil_n": None,
+        "soil_p": None,
+        "soil_k": None,
+        "irrigation_method": "Standard Furrow / Basin",
+    }
+
+    tabular_ml_result = {
+        "top_pest": {
+            "pest_name": record.pest_name or "General Pest",
+            "pest_value": record.pest_value or 5.0,
+            "risk_level": risk,
+        },
+        "pests_ranked": [],
+        "forecast_risk": [],
+    }
+
+    decision_assessment = evaluate_crop_health_and_risk(
+        crop=record.crop or "Rice",
+        growth_stage_info=growth_stage_info,
+        weather_dict=weather_dict,
+        forecast_days=[],
+        soil_data=soil_data,
+        tabular_ml_result=tabular_ml_result,
+        image_diagnosis_result=None,
+    )
+
+    structured_recs = generate_structured_recommendations(
+        crop=record.crop or "Rice",
+        growth_stage_info=growth_stage_info,
+        weather_dict=weather_dict,
+        forecast_days=[],
+        soil_data=soil_data,
+        decision_assessment=decision_assessment,
+        tabular_ml_result=tabular_ml_result,
+        image_diagnosis_result=None,
+    )
+
     advisory = generate_smart_advisory(
-        crop=record.crop,
-        top_pest=record.pest_name,
+        crop=record.crop or "Rice",
+        top_pest=record.pest_name or "General Pest",
         risk_level=risk,
         weather_dict=weather_dict,
     )
@@ -285,6 +338,9 @@ def get_recommendation(prediction_id: int, db: Session):
     advisory["crop"] = record.crop
     advisory["pest"] = record.pest_name
     advisory["riskLevel"] = risk
+    advisory["growth_stage_info"] = growth_stage_info
+    advisory["decision_assessment"] = decision_assessment
+    advisory["structured_recommendations"] = structured_recs
     advisory["suggestedActions"] = advisory["pestManagement"]["immediateActions"]
     advisory["prevention"] = advisory["pestManagement"]["preventionMeasures"]
     advisory["recommendedPesticides"] = advisory["pestManagement"]["recommendedPesticides"]

@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   ScanLine,
+  Camera,
   ClipboardList,
   History,
   BarChart3,
@@ -16,9 +17,11 @@ import toast from "react-hot-toast";
 
 export const NAVIGATION_LINKS = [
   { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/app/diagnosis", label: "Plant Diagnosis", icon: Camera },
   { to: "/app/predict", label: "AI Prediction", icon: ScanLine },
   { to: "/app/recommendation", label: "AI Recommendation", icon: ClipboardList },
   { to: "/app/history", label: "History", icon: History },
+
   { to: "/app/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/app/assistant", label: "AI Assistant", icon: MessageCircle },
   { to: "/app/settings", label: "Settings", icon: SettingsIcon },

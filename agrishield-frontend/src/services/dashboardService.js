@@ -13,3 +13,5 @@ export const getMonthlyPredictions = () =>
 
 export const getCropAnalysis = () => api.get("/dashboard/crop-analysis").then((r) => r.data);
 
+export const getFieldsOverview = () => api.get("/dashboard/fields").then((r) => r.data);
+

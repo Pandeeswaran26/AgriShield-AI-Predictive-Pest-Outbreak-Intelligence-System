@@ -43,6 +43,22 @@ DEFAULT_STARTER_PLANTS = [
 ]
 
 
+from agronomy.growth_stage import calculate_growth_stage
+
+
+def _enrich_plant_growth(plant: Plant) -> Plant:
+    if plant and plant.planting_date:
+        try:
+            stage_info = calculate_growth_stage(plant.planting_date, plant.crop_type)
+            setattr(plant, "days_after_planting", stage_info.get("days_after_planting"))
+            setattr(plant, "growth_stage_details", stage_info)
+            if not plant.growth_stage or plant.growth_stage == "Vegetative":
+                plant.growth_stage = stage_info.get("growth_stage")
+        except Exception:
+            pass
+    return plant
+
+
 def seed_starter_plants_if_empty(db: Session, user_id: int) -> List[Plant]:
     count = db.query(Plant).filter(Plant.user_id == user_id).count()
     if count == 0:
@@ -50,18 +66,20 @@ def seed_starter_plants_if_empty(db: Session, user_id: int) -> List[Plant]:
             plant = Plant(user_id=user_id, **starter)
             db.add(plant)
         db.commit()
-    return db.query(Plant).filter(Plant.user_id == user_id).order_by(Plant.id.asc()).all()
+    plants = db.query(Plant).filter(Plant.user_id == user_id).order_by(Plant.id.asc()).all()
+    return [_enrich_plant_growth(p) for p in plants]
 
 
 def get_user_plants(db: Session, user_id: int) -> List[Plant]:
     plants = db.query(Plant).filter(Plant.user_id == user_id).order_by(Plant.updated_at.desc()).all()
     if not plants:
         return seed_starter_plants_if_empty(db, user_id)
-    return plants
+    return [_enrich_plant_growth(p) for p in plants]
 
 
 def get_plant_by_id(db: Session, plant_id: int, user_id: int) -> Optional[Plant]:
-    return db.query(Plant).filter(Plant.id == plant_id, Plant.user_id == user_id).first()
+    plant = db.query(Plant).filter(Plant.id == plant_id, Plant.user_id == user_id).first()
+    return _enrich_plant_growth(plant) if plant else None
 
 
 def create_plant(db: Session, user_id: int, data: PlantCreate) -> Plant:
