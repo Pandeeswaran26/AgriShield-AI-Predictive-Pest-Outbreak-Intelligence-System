@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from database.database import Base
 
 
@@ -22,9 +22,13 @@ class Plant(Base):
 
     # Field & Agronomic Dimensions
     field_name = Column(String, nullable=True)            # e.g., "North Plot A"
+    field_position = Column(String, nullable=True)        # e.g., "Zone A - Sector 2", "North Ridge Row 5"
     field_size = Column(Float, nullable=True)             # e.g., 3.5
     field_size_unit = Column(String, default="acres")     # "acres" or "hectares"
     irrigation_method = Column(String, nullable=True)     # "Drip", "Sprinkler", "Flood / Furrow", "Rainfed"
+    irrigation_frequency = Column(String, nullable=True)  # e.g., "2 times daily", "Every 2 days"
+    irrigation_hours = Column(Float, nullable=True)       # e.g., 2.5 (hours runtime per cycle)
+    auto_irrigation_alerts = Column(Boolean, default=True)# Send email when irrigation needed
     soil_type = Column(String, nullable=True)             # e.g., "Clay Loam", "Black Soil", "Red Sandy Loam"
     soil_moisture = Column(Float, nullable=True)          # e.g., 65.0 (%)
     soil_ph = Column(Float, nullable=True)                # e.g., 6.5 (pH scale)

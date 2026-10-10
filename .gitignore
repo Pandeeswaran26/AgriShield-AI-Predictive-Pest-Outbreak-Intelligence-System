@@ -75,6 +75,7 @@ desktop.ini
 *.db-journal
 *.log
 outputs/
+backend/uploads/
 
 # Data and model artifacts
 datasets/

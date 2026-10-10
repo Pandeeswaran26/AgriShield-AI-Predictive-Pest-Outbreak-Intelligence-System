@@ -169,34 +169,97 @@ def evaluate_crop_health_and_risk(
             })
 
     # ── 4. Unified Overall Health & Combined Risk Determination ─────────
-    # Combine Tabular ML + Leaf Pathology + Environmental Stress
+    decision_rules = []
     overall_health = "Healthy"
     overall_risk = "Low"
     health_headline = "Crop Condition Normal"
+    composite_risk_score = 15
+    decision_confidence = 85.0
 
     if has_valid_leaf_diagnosis and not foliar_is_healthy:
         if foliar_confidence >= 70.0 or foliar_severity in ["High", "Critical"]:
             overall_health = "Active Disease Infection"
             overall_risk = "High"
             health_headline = f"Foliar Disease Confirmed: {foliar_disease}"
+            composite_risk_score = max(75, int(foliar_confidence))
+            decision_rules.append("RULE_CONFIRMED_FOLIAR_DISEASE_PATHOLOGY")
+            decision_confidence = foliar_confidence
         else:
             overall_health = "Foliar Symptoms Detected"
             overall_risk = "Moderate" if pest_risk_level != "High" else "High"
             health_headline = f"Potential Foliar Disease: {foliar_disease}"
+            composite_risk_score = 55
+            decision_rules.append("RULE_BORDERLINE_FOLIAR_SYMPTOMS")
+            decision_confidence = 65.0
     elif pest_risk_level == "High":
         overall_health = "Pest Outbreak Alert"
         overall_risk = "High"
         health_headline = f"Elevated Pest Outbreak Pressure ({top_pest_name})"
+        composite_risk_score = min(95, int(50 + pest_prob_score * 1.5))
+        decision_rules.append("RULE_TABULAR_ML_HIGH_OUTBREAK_PRESSURE")
+        decision_confidence = 82.0
     elif pest_risk_level == "Medium" or env_stress_points >= 3:
         overall_health = "Moderate Environmental Stress"
         overall_risk = "Moderate"
         health_headline = "Microclimate Favorable for Pest / Disease Incubation"
+        composite_risk_score = 45 + env_stress_points * 5
+        decision_rules.append("RULE_ENVIRONMENTAL_MICROCLIMATE_STRESS")
+        decision_confidence = 78.0
     else:
         overall_health = "Healthy & Optimal"
         overall_risk = "Low"
         health_headline = f"{crop} crop is within normal physiological parameters"
+        composite_risk_score = 18
+        decision_rules.append("RULE_ALL_VECTORS_NORMAL_PHYSIOLOGICAL_BASE")
+        decision_confidence = 88.0
 
-    # ── 5. Data Source Manifest ──────────────────────────────────────────
+    # ── 5. Formalized Evidence Fusion Structure ──────────────────────────
+    has_soil_test = bool(soil_data.get("soil_n") is not None or soil_data.get("soil_p") is not None)
+    evidence_fusion = {
+        "weather_evidence": {
+            "max_t": max_t,
+            "min_t": min_t,
+            "diurnal_swing": temp_swing,
+            "morning_rh": rh1,
+            "rainfall_today": rf,
+            "forecast_7d_rainfall": round(forecast_rf_sum, 1),
+            "wind_speed": ws,
+            "stress_points": env_stress_points,
+            "source": "LIVE WEATHER (OPEN-METEO)",
+        },
+        "crop_stage_evidence": {
+            "crop": crop,
+            "growth_stage": growth_stage_info.get("growth_stage", "Vegetative"),
+            "days_after_planting": growth_stage_info.get("days_after_planting", 30),
+            "water_demand": growth_stage_info.get("water_demand", "Medium"),
+            "nitrogen_demand": growth_stage_info.get("nitrogen_demand", "Medium"),
+            "potassium_demand": growth_stage_info.get("potassium_demand", "Medium"),
+            "source": "CALCULATED (ESTIMATE)",
+        },
+        "pest_model_evidence": {
+            "top_pest": top_pest_name,
+            "predicted_incidence": round(pest_prob_score, 2),
+            "risk_level": pest_risk_level,
+            "source": "TABULAR ML (EXTRATREES-v2.1)",
+        },
+        "vision_evidence": {
+            "has_leaf_scan": has_valid_leaf_diagnosis,
+            "disease_detected": foliar_disease,
+            "is_healthy": foliar_is_healthy,
+            "calibrated_confidence": foliar_confidence,
+            "severity": foliar_severity,
+            "source": "PLANT VISION (38-CLASS)",
+        },
+        "soil_evidence": {
+            "soil_type": soil_data.get("soil_type", "Loam"),
+            "moisture": soil_moisture,
+            "ph": soil_ph,
+            "has_lab_soil_test": has_soil_test,
+            "source": "USER / SENSOR DATA",
+        },
+    }
+
+    # ── 6. Data Source Manifest ──────────────────────────────────────────
     data_sources = {
         "location": "USER / GPS SENSOR",
         "crop": "USER INPUT",
@@ -208,15 +271,17 @@ def evaluate_crop_health_and_risk(
         "rainfall": "LIVE WEATHER (OPEN-METEO)",
         "forecast": "LIVE WEATHER (OPEN-METEO)",
         "soil_moisture": "USER / SENSOR DATA" if soil_data.get("soil_moisture") is not None else "UNSPECIFIED (DEFAULT USED FOR ADVISORY)",
-        "soil_nutrients_npk": "USER / SOIL TEST" if (soil_data.get("soil_n") is not None or soil_data.get("soil_p") is not None) else "NOT PROVIDED (WARNING ISSUED)",
+        "soil_nutrients_npk": "USER / SOIL TEST" if has_soil_test else "NOT PROVIDED (WARNING ISSUED)",
         "pest_outbreak_risk": "TABULAR ML MODEL (EXTRATREES)",
-        "leaf_diagnosis": "PLANT VISION CLASSIFIER (38-CLASS RESNET/BENCHMARK)" if has_valid_leaf_diagnosis else "NO IMAGE ATTACHED",
-        "decision_synthesis": "AGRISHIELD HYBRID DECISION ENGINE",
+        "leaf_diagnosis": "PLANT VISION CLASSIFIER (38-CLASS)" if has_valid_leaf_diagnosis else "NO IMAGE ATTACHED",
+        "decision_synthesis": "AGRISHIELD EVIDENCE FUSION DECISION ENGINE",
     }
 
     return {
         "overall_health_status": overall_health,
         "overall_risk_level": overall_risk,
+        "risk_score": composite_risk_score,
+        "confidence": round(decision_confidence, 1),
         "health_headline": health_headline,
         "crop": crop,
         "growth_stage": growth_stage_info.get("growth_stage", "Vegetative"),
@@ -229,6 +294,10 @@ def evaluate_crop_health_and_risk(
         },
         "environmental_stress_score": env_stress_points,
         "stress_factors": stress_factors,
+        "evidence_fusion": evidence_fusion,
+        "decision_rules": decision_rules,
+        "model_version": "2.1.0",
+        "engine_version": "1.5.0",
         "tabular_pest_assessment": {
             "top_pest": top_pest_name,
             "risk_level": pest_risk_level,

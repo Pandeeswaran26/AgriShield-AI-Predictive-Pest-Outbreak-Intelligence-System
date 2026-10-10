@@ -1,0 +1,115 @@
+crop_name,crop_type,crop_days,soil_moisture,soil_temperature,temperature,humidity,rainfall,irrigation,location,dataset_source
+Maize,2,139.0,25.2,28.2,33.6,85.7,286.6,0,South India,SmartFarming-IoT-2024
+Rice,4,90.0,44.59,25.0,21.0,78.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Tomato,7,61.0,15.8,25.0,32.0,58.0,0.0,1,Nasik-Maharashtra,TomatoMH-2023
+Rice,4,140.0,41.51,14.9,15.9,62.2,217.6,1,South USA,SmartFarming-IoT-2024
+Maize,2,124.0,31.51,16.3,17.7,77.4,88.3,0,Central USA,SmartFarming-IoT-2024
+Cotton,0,150.0,25.56,19.7,22.2,58.4,295.2,1,South India,SmartFarming-IoT-2024
+Sugarcane,6,60.0,16.4,23.0,30.0,68.0,0.0,1,Kolhapur-Maharashtra,SugarcaneMH-2023
+Sugarcane,6,60.0,22.3,27.0,35.0,56.0,0.0,1,Coimbatore-Tamil Nadu,SugarcaneTN-2023
+Cotton,0,119.0,10.73,17.1,18.8,51.6,136.0,1,South USA,SmartFarming-IoT-2024
+Rice,4,117.0,24.67,19.7,22.3,62.5,150.2,1,South USA,SmartFarming-IoT-2024
+Groundnut,1,69.0,22.04,20.0,26.0,61.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,24.0,23.18,20.0,30.0,64.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Cotton,0,119.0,23.61,17.3,19.1,80.4,238.1,1,East Africa,SmartFarming-IoT-2024
+Groundnut,1,17.0,43.82,24.0,31.0,64.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,126.0,36.24,25.2,29.7,85.0,79.5,0,Central USA,SmartFarming-IoT-2024
+Rice,4,42.0,20.29,20.0,24.0,54.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Potato,3,90.0,24.5,19.0,25.0,64.0,0.0,1,Agra-UP,PotatoUP-2023
+Rice,4,128.0,43.35,23.4,27.2,41.7,245.3,1,East Africa,SmartFarming-IoT-2024
+Maize,2,110.0,40.74,21.8,25.1,84.2,250.5,1,East Africa,SmartFarming-IoT-2024
+Rice,4,91.0,16.49,19.0,21.0,77.0,0.0,1,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,81.0,33.37,22.0,20.0,62.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Cotton,0,109.0,11.54,19.3,21.7,83.1,267.8,1,East Africa,SmartFarming-IoT-2024
+Groundnut,1,21.0,19.83,20.0,28.0,63.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Tomato,7,16.0,13.8,19.0,24.0,68.0,0.0,1,Kolar-Karnataka,TomatoKA-2024
+Soybean,5,118.0,40.17,15.5,16.7,86.7,86.3,0,South India,SmartFarming-IoT-2024
+Sugarcane,6,180.0,28.9,25.0,31.5,67.0,0.0,0,Kolhapur-Maharashtra,SugarcaneMH-2023
+Rice,4,19.0,25.44,20.0,28.0,64.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Soybean,5,116.0,12.8,23.2,26.9,51.8,218.8,1,North India,SmartFarming-IoT-2024
+Cotton,0,115.0,26.11,24.1,28.2,76.3,236.1,1,South India,SmartFarming-IoT-2024
+Cotton,0,107.0,11.77,20.7,23.7,64.8,231.1,0,North India,SmartFarming-IoT-2024
+Cotton,0,90.0,31.07,25.3,29.8,41.4,163.3,1,Central USA,SmartFarming-IoT-2024
+Tomato,7,17.0,28.1,20.5,25.5,70.0,0.0,0,Nasik-Maharashtra,TomatoMH-2023
+Rice,4,132.0,13.65,14.7,15.6,64.4,222.3,1,North India,SmartFarming-IoT-2024
+Soybean,5,114.0,26.96,26.2,30.9,87.0,137.1,0,South India,SmartFarming-IoT-2024
+Wheat,8,144.0,29.32,23.5,27.4,68.9,265.4,1,South USA,SmartFarming-IoT-2024
+Soybean,5,129.0,17.85,26.1,30.8,64.7,109.2,1,Central USA,SmartFarming-IoT-2024
+Soybean,5,106.0,36.26,23.6,27.5,74.8,298.1,0,East Africa,SmartFarming-IoT-2024
+Soybean,5,145.0,36.28,19.4,21.8,47.9,123.4,1,North India,SmartFarming-IoT-2024
+Wheat,8,139.0,28.32,17.9,19.9,73.2,207.7,1,East Africa,SmartFarming-IoT-2024
+Soybean,5,106.0,36.79,26.3,31.1,70.0,250.6,1,South India,SmartFarming-IoT-2024
+Sugarcane,6,331.0,40.0,25.0,30.0,73.0,18.0,0,Coimbatore-Tamil Nadu,SugarcaneTN-2023
+Maize,2,93.0,31.72,29.0,34.7,83.4,274.2,1,South USA,SmartFarming-IoT-2024
+Cotton,0,126.0,20.34,21.7,24.9,86.7,101.9,1,Central USA,SmartFarming-IoT-2024
+Sugarcane,6,150.0,20.1,29.0,36.0,52.0,0.0,1,Coimbatore-Tamil Nadu,SugarcaneTN-2023
+Maize,2,136.0,41.59,17.6,19.4,63.8,114.4,1,South India,SmartFarming-IoT-2024
+Cotton,0,115.0,20.47,27.9,33.2,41.1,89.8,0,South USA,SmartFarming-IoT-2024
+Cotton,0,137.0,43.5,25.5,30.0,75.5,137.1,1,South India,SmartFarming-IoT-2024
+Wheat,8,111.0,28.81,25.0,29.4,66.0,270.0,1,North India,SmartFarming-IoT-2024
+Rice,4,95.0,39.04,18.8,21.0,72.9,291.9,1,South USA,SmartFarming-IoT-2024
+Wheat,8,123.0,33.14,14.5,15.3,51.9,247.5,1,South India,SmartFarming-IoT-2024
+Rice,4,44.0,35.48,22.0,28.0,54.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,82.0,16.28,19.0,19.0,79.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Maize,2,115.0,40.73,24.1,28.1,63.6,193.0,0,East Africa,SmartFarming-IoT-2024
+Soybean,5,124.0,31.81,24.2,28.2,64.6,180.0,1,Central USA,SmartFarming-IoT-2024
+Cotton,0,149.0,27.13,18.3,20.4,62.6,153.6,1,South India,SmartFarming-IoT-2024
+Maize,2,118.0,10.28,22.2,25.6,75.0,280.1,1,Central USA,SmartFarming-IoT-2024
+Potato,3,61.0,30.3,16.5,22.5,72.0,0.0,0,Agra-UP,PotatoUP-2023
+Maize,2,119.0,33.87,19.0,21.3,58.1,109.9,1,Central USA,SmartFarming-IoT-2024
+Maize,2,97.0,43.6,24.4,28.6,79.8,278.5,1,East Africa,SmartFarming-IoT-2024
+Groundnut,1,1.0,20.29,20.0,32.0,55.0,0.0,1,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,32.0,37.54,23.0,24.0,68.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Maize,2,100.0,16.29,17.5,19.4,78.9,273.9,0,South USA,SmartFarming-IoT-2024
+Rice,4,149.0,16.25,26.9,31.9,41.0,277.7,0,East Africa,SmartFarming-IoT-2024
+Maize,2,104.0,10.31,17.2,19.0,84.9,182.3,0,South USA,SmartFarming-IoT-2024
+Soybean,5,108.0,11.74,20.9,23.9,70.4,156.0,1,South India,SmartFarming-IoT-2024
+Wheat,8,131.0,19.13,22.9,26.6,47.6,154.4,0,South India,SmartFarming-IoT-2024
+Maize,2,147.0,43.33,15.1,16.2,49.1,290.3,1,South India,SmartFarming-IoT-2024
+Maize,2,147.0,18.35,21.4,24.6,69.0,284.8,1,South India,SmartFarming-IoT-2024
+Maize,2,121.0,27.1,19.7,22.3,80.3,296.3,1,East Africa,SmartFarming-IoT-2024
+Rice,4,11.0,22.97,20.0,28.0,57.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,107.0,16.99,19.5,22.0,83.6,255.1,1,South USA,SmartFarming-IoT-2024
+Soybean,5,107.0,30.19,22.8,26.4,63.8,97.4,1,East Africa,SmartFarming-IoT-2024
+Wheat,8,117.0,12.8,18.8,21.1,61.3,200.7,1,Central USA,SmartFarming-IoT-2024
+Rice,4,150.0,20.66,15.5,16.7,50.2,209.0,1,East Africa,SmartFarming-IoT-2024
+Wheat,8,142.0,24.74,26.2,31.0,56.2,228.6,0,Central USA,SmartFarming-IoT-2024
+Maize,2,115.0,44.16,21.0,24.0,69.2,112.1,1,North India,SmartFarming-IoT-2024
+Soybean,5,112.0,19.74,25.6,30.2,61.1,89.9,1,South USA,SmartFarming-IoT-2024
+Groundnut,1,85.0,32.85,22.0,25.0,60.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Cotton,0,117.0,35.54,18.9,21.2,87.7,113.7,0,South USA,SmartFarming-IoT-2024
+Soybean,5,128.0,18.22,25.7,30.2,53.3,52.4,1,North India,SmartFarming-IoT-2024
+Soybean,5,112.0,10.34,18.0,20.0,73.7,73.2,1,East Africa,SmartFarming-IoT-2024
+Wheat,8,147.0,13.92,24.6,28.8,41.8,87.3,1,East Africa,SmartFarming-IoT-2024
+Soybean,5,94.0,33.01,23.3,27.1,47.7,154.9,0,Central USA,SmartFarming-IoT-2024
+Cotton,0,119.0,35.35,28.0,33.4,66.7,295.2,1,Central USA,SmartFarming-IoT-2024
+Cotton,0,94.0,27.17,28.4,33.8,74.0,158.0,1,Central USA,SmartFarming-IoT-2024
+Wheat,8,119.0,31.79,21.1,24.2,67.2,263.8,0,South India,SmartFarming-IoT-2024
+Rice,4,149.0,17.18,24.2,28.3,47.4,294.5,1,Central USA,SmartFarming-IoT-2024
+Groundnut,1,67.0,14.01,18.0,26.0,59.0,0.0,1,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Maize,2,122.0,10.96,27.1,32.1,50.7,245.0,1,North India,SmartFarming-IoT-2024
+Groundnut,1,29.0,43.71,24.0,28.0,62.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Wheat,8,98.0,15.53,21.2,24.3,47.2,135.0,1,North India,SmartFarming-IoT-2024
+Soybean,5,145.0,38.5,15.1,16.2,78.0,95.7,0,South USA,SmartFarming-IoT-2024
+Rice,4,95.0,43.2,24.0,19.0,69.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Rice,4,111.0,42.09,24.1,28.1,46.4,215.5,1,East Africa,SmartFarming-IoT-2024
+Wheat,8,134.0,30.22,18.4,20.6,89.7,72.6,0,North India,SmartFarming-IoT-2024
+Rice,4,108.0,21.32,27.2,32.3,86.7,63.5,1,North India,SmartFarming-IoT-2024
+Maize,2,135.0,31.19,16.5,18.0,68.9,111.8,1,South India,SmartFarming-IoT-2024
+Sugarcane,6,61.0,30.1,26.5,33.5,62.0,0.0,0,Coimbatore-Tamil Nadu,SugarcaneTN-2023
+Potato,3,61.0,20.8,18.0,23.5,71.0,0.0,1,Shimla-HP,PotatoHP-2023
+Rice,4,26.0,39.13,22.0,31.0,57.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Wheat,8,115.0,28.41,20.5,23.3,78.4,69.2,1,East Africa,SmartFarming-IoT-2024
+Groundnut,1,23.0,26.37,21.0,29.0,65.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Cotton,0,147.0,41.36,25.6,30.1,73.3,298.5,0,Central USA,SmartFarming-IoT-2024
+Tomato,7,61.0,38.5,23.5,30.5,70.0,12.0,0,Kolar-Karnataka,TomatoKA-2024
+Sugarcane,6,270.0,20.5,25.0,30.0,72.0,0.0,1,Coimbatore-Tamil Nadu,SugarcaneTN-2023
+Tomato,7,30.0,21.8,22.5,28.0,66.0,0.0,1,Nasik-Maharashtra,TomatoMH-2023
+Soybean,5,95.0,41.87,16.4,17.9,88.5,267.7,1,North India,SmartFarming-IoT-2024
+Rice,4,140.0,38.53,21.8,25.1,74.2,173.7,0,South India,SmartFarming-IoT-2024
+Sugarcane,6,210.0,21.5,26.5,33.5,60.0,0.0,1,Kolhapur-Maharashtra,SugarcaneMH-2023
+Wheat,8,116.0,40.09,17.3,19.0,81.7,192.4,1,South USA,SmartFarming-IoT-2024
+Cotton,0,102.0,11.88,16.9,18.6,69.6,199.0,0,North India,SmartFarming-IoT-2024
+Rice,4,51.0,14.63,19.0,22.0,54.0,0.0,0,"Karad, Western Maharashtra, India",GCEKIoT-2020
+Soybean,5,150.0,40.12,19.9,22.5,59.8,285.5,1,North India,SmartFarming-IoT-2024
+Rice,4,133.0,27.35,18.6,20.8,44.1,230.5,0,East Africa,SmartFarming-IoT-2024

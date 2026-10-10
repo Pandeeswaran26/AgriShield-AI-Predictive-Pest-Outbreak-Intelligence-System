@@ -68,3 +68,72 @@ class PredictionHistory(Base):
     evp = Column(Float, nullable=True)
 
     prediction_date = Column(DateTime, default=utc_now)
+
+
+# ---------------------------------------------------------------------------
+# Farmer Action Feedback Loop
+# ---------------------------------------------------------------------------
+
+class FarmerAction(Base):
+    """Records the farmer's response to a recommendation — what they actually did."""
+    __tablename__ = "farmer_actions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    plant_id = Column(Integer, nullable=True, index=True)
+    prediction_id = Column(Integer, nullable=True, index=True)
+
+    action_type = Column(String, nullable=False)  # Irrigation | Fertilizer | Chemical Spray | Biological Treatment | Scouting | No Action
+    description = Column(Text, nullable=True)     # Free-text notes on what was applied / done
+    product_used = Column(String, nullable=True)  # Herbicide / fertilizer brand, dose
+    dosage = Column(String, nullable=True)        # e.g. "2 L/acre"
+
+    performed_at = Column(DateTime, nullable=True)  # When the action was taken
+    created_at = Column(DateTime, default=utc_now)
+
+
+class FollowUpOutcome(Base):
+    """Records the observed crop condition after a farmer action."""
+    __tablename__ = "follow_up_outcomes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    farmer_action_id = Column(Integer, nullable=False, index=True)
+    plant_id = Column(Integer, nullable=True, index=True)
+
+    days_after_action = Column(Integer, nullable=True)  # How many days since the action
+
+    observed_condition = Column(String, nullable=False)  # Improved | Stable | Worsened | Pest Eradicated | Recurrence
+    severity_change = Column(String, nullable=True)       # Better | Same | Worse
+    notes = Column(Text, nullable=True)                   # Detailed field observations
+
+    recorded_at = Column(DateTime, default=utc_now)
+
+
+class ModelVersionRecord(Base):
+    """Tracks trained model versions and their benchmark metrics for the monitoring dashboard."""
+    __tablename__ = "model_version_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    model_name = Column(String, nullable=False)          # e.g. ExtraTrees, XGBoost
+    version = Column(String, nullable=False)             # e.g. 2.1.0
+    feature_schema = Column(String, nullable=True)       # e.g. FS-3
+
+    # Regression metrics
+    mae = Column(Float, nullable=True)
+    rmse = Column(Float, nullable=True)
+    r2 = Column(Float, nullable=True)
+
+    # Classification metrics
+    accuracy = Column(Float, nullable=True)
+    precision = Column(Float, nullable=True)
+    recall = Column(Float, nullable=True)
+    f1_score = Column(Float, nullable=True)
+
+    # Calibration
+    brier_score = Column(Float, nullable=True)
+
+    benchmark_report_json = Column(Text, nullable=True)  # Full JSON from model_benchmark.py
+    trained_at = Column(DateTime, nullable=True)
+    is_active = Column(Boolean, default=False)           # True for the currently deployed model
+
+    created_at = Column(DateTime, default=utc_now)

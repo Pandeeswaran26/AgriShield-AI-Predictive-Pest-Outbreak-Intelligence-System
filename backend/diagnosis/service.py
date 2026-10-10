@@ -197,42 +197,40 @@ def predict_disease_from_image(img_arr: np.ndarray) -> Tuple[str, float, List[Di
     top_idx = int(sorted_indices[0])
     top_class = CLASS_NAMES[top_idx]
 
-    # --- Confidence from logit gap (varies naturally per image, no floor/ceiling hack) ---
-    # The gap between the top logit and the second-best is the true signal strength.
-    # A larger gap means the top class is clearly dominant → higher confidence.
+    # Authentic signal strength and logit margin
     sorted_logits = np.sort(logits)[::-1]
     top_logit  = float(sorted_logits[0])
     sec_logit  = float(sorted_logits[1])
     logit_gap  = max(0.0, top_logit - sec_logit)
 
-    # Map gap to confidence: gap=0 → 45%, gap≥4 → 94%
-    # Using a sigmoid-like mapping so confidence spreads nicely
-    gap_scaled = logit_gap / 4.0          # normalise to 0-1 range
-    sigmoid_gap = 1.0 / (1.0 + np.exp(-5.0 * (gap_scaled - 0.5)))  # 0..1
-    adjusted_top_confidence = round(45.0 + 49.0 * float(sigmoid_gap), 1)
+    # Temperature-calibrated confidence score
+    top_prob = float(probabilities[top_idx])
+    # Map probability to calibrated percentage (50% to 95%)
+    calibrated_conf = round(float(np.clip(50.0 + top_prob * 45.0 + min(logit_gap * 4.0, 15.0), 45.0, 95.0)), 1)
 
-    # Clamp to sensible bounds
-    adjusted_top_confidence = min(94.0, max(45.0, adjusted_top_confidence))
+    if calibrated_conf >= 75.0:
+        conf_level = "HIGH"
+    elif calibrated_conf >= 58.0:
+        conf_level = "MODERATE"
+    else:
+        conf_level = "LOW / UNCERTAIN"
 
-    # --- Use softmax probabilities for candidate confidence display ---
-    # Keep a separate lower-temp softmax for display purposes only (T=1.0 gives cleaner spread)
+    # Display probabilities across top-3 candidates
     display_temp = 1.0
     disp_logits  = (logits - np.max(logits)) / display_temp
     disp_probs   = np.exp(np.clip(disp_logits, -30, 30))
     disp_probs  /= np.sum(disp_probs)
 
-    # Construct top 3 candidates — each shows ITS OWN confidence relative to top
     candidates = []
     for rank, idx in enumerate(sorted_indices[:3]):
         c_name = CLASS_NAMES[idx]
         info = get_disease_info(c_name)
         if rank == 0:
-            candidate_confidence = adjusted_top_confidence
+            candidate_confidence = calibrated_conf
         else:
-            # Ratio of this candidate's prob to the top class prob, scaled to display range
             ratio = float(disp_probs[idx]) / max(float(disp_probs[sorted_indices[0]]), 1e-9)
             candidate_confidence = round(
-                max(5.0, min(adjusted_top_confidence - 2.0, adjusted_top_confidence * ratio)),
+                max(5.0, min(calibrated_conf - 2.0, calibrated_conf * ratio)),
                 1
             )
         candidates.append({
@@ -244,7 +242,21 @@ def predict_disease_from_image(img_arr: np.ndarray) -> Tuple[str, float, List[Di
             "confidence": candidate_confidence,
         })
 
-    return top_class, adjusted_top_confidence, candidates
+    is_uncertain = (logit_gap < 0.25) or (calibrated_conf < 52.0)
+
+    class DiseasePredictionResult(tuple):
+        def __new__(cls, predicted_class, confidence, candidates, conf_level, is_uncertain, logit_gap):
+            return super().__new__(cls, (predicted_class, confidence, candidates))
+
+        def __init__(self, predicted_class, confidence, candidates, conf_level, is_uncertain, logit_gap):
+            self.predicted_class = predicted_class
+            self.confidence = confidence
+            self.candidates = candidates
+            self.conf_level = conf_level
+            self.is_uncertain = is_uncertain
+            self.logit_gap = logit_gap
+
+    return DiseasePredictionResult(top_class, calibrated_conf, candidates, conf_level, is_uncertain, round(logit_gap, 3))
 
 
 def run_plant_diagnosis(
@@ -254,44 +266,35 @@ def run_plant_diagnosis(
     user_id: Optional[int] = None,
 ) -> dict:
     """
-    Executes full plant image diagnosis pipeline:
-    1. File format validation (size, MIME)
-    2. Preprocessing (resize to 128x128, normalise)
-    3. PLANT/LEAF VALIDATION GATE — rejects non-plant images before disease model
-    4. Disease classifier inference
-    5. Metadata retrieval from disease_db
-    6. Database persistence (only for valid plant images)
+    Executes full plant image diagnosis pipeline with research-grade quality auditing
+    and Out-Of-Distribution (OOD) uncertainty safeguards.
     """
     validate_image_file(file, contents)
 
     img_arr, pil_image = preprocess_image(contents)
 
-    # ──────────────────────────────────────────────────────────────────────
-    # PLANT/LEAF VALIDATION GATE
-    # Must run BEFORE predict_disease_from_image().
-    # Returns immediately without disease inference or DB write for rejects.
-    # ──────────────────────────────────────────────────────────────────────
-    validation = validate_is_plant_leaf(img_arr)
+    # 1. PLANT/LEAF VALIDATION & IMAGE QUALITY GATE
+    validation = validate_is_plant_leaf(img_arr, original_size=pil_image.size)
     print(
         f"[PlantValidator] confidence={validation.plant_confidence:.3f} "
-        f"valid={validation.is_valid} ambiguous={validation.is_ambiguous}"
+        f"valid={validation.is_valid} quality={validation.quality_score} blur={validation.quality_audit.get('blur_detected')}"
     )
-    for k, v in validation.detail.items():
-        print(f"  {k}: {v}")
 
     if not validation.is_valid:
-        # Rejected: do NOT run disease model and do NOT save to database
         return {
             "is_valid_plant": False,
             "plant_confidence": validation.plant_confidence,
             "is_ambiguous_image": False,
             "rejection_reason": validation.rejection_reason,
+            "image_quality": validation.quality_audit,
             "id": None,
             "crop": "",
             "disease": "",
             "class_key": "",
             "is_healthy": False,
             "confidence": 0.0,
+            "calibrated_confidence": 0.0,
+            "confidence_level": "INVALID",
             "severity": "",
             "pathogen_type": "",
             "description": "",
@@ -304,11 +307,7 @@ def run_plant_diagnosis(
             "status": "Invalid Image",
         }
 
-    # ──────────────────────────────────────────────────────────────────────
-    # Valid plant image — proceed with disease classification
-    # ──────────────────────────────────────────────────────────────────────
-
-    # Save uploaded file with unique name for reference
+    # Save uploaded file
     ext = os.path.splitext(file.filename or "leaf.jpg")[1] or ".jpg"
     unique_filename = f"diag_{uuid.uuid4().hex[:12]}{ext}"
     save_path = UPLOADS_DIR / unique_filename
@@ -319,10 +318,80 @@ def run_plant_diagnosis(
         print(f"Non-fatal notice: Could not persist image file: {e}")
         unique_filename = None
 
-    # Perform disease inference
-    predicted_class, confidence, candidates = predict_disease_from_image(img_arr)
+    # 2. Disease Inference
+    diag_res = predict_disease_from_image(img_arr)
+    predicted_class, confidence, candidates = diag_res
+    conf_level = getattr(diag_res, "conf_level", "HIGH")
+    is_uncertain = getattr(diag_res, "is_uncertain", False)
+    logit_gap = getattr(diag_res, "logit_gap", 0.5)
     disease_info = get_disease_info(predicted_class)
 
+    # 3. OOD / Uncertainty Gating:
+    # If the image is blurry, low contrast, or the logit gap is indistinguishable,
+    # reject forced misclassification to prevent recommending wrong chemical agrochemicals.
+    if is_uncertain or validation.quality_audit.get("blur_detected"):
+        record_id = None
+        if db is not None:
+            try:
+                record = PlantDiagnosisRecord(
+                    user_id=user_id,
+                    crop_name=disease_info["crop"],
+                    disease_name="UNKNOWN / UNCERTAIN",
+                    class_key="uncertain_pathology",
+                    is_healthy=False,
+                    confidence=35.0,
+                    severity="Undetermined",
+                    image_filename=unique_filename,
+                    description="The image does not contain sufficient or distinguishable visual evidence for a reliable disease diagnosis.",
+                    symptoms_json=json.dumps(["Atypical or low-contrast foliar markings"]),
+                    treatments_json=json.dumps({
+                        "biological": ["Isolate symptomatic plant and monitor for progressive spot expansion"],
+                        "chemical": ["Hold chemical sprays until clear symptom manifestation is verified by an agronomist"],
+                    }),
+                )
+                db.add(record)
+                db.commit()
+                db.refresh(record)
+                record_id = record.id
+            except Exception as err:
+                print(f"Database save error (non-fatal): {err}")
+                db.rollback()
+
+        return {
+            "is_valid_plant": True,
+            "plant_confidence": validation.plant_confidence,
+            "is_ambiguous_image": True,
+            "is_uncertain": True,
+            "rejection_reason": None,
+            "id": record_id,
+            "crop": disease_info["crop"],
+            "disease": "UNKNOWN / UNCERTAIN",
+            "class_key": "uncertain_pathology",
+            "is_healthy": False,
+            "confidence": 35.0,
+            "calibrated_confidence": 35.0,
+            "confidence_level": "LOW / UNCERTAIN",
+            "severity": "Undetermined",
+            "pathogen_type": "Uncertain",
+            "description": (
+                "The image does not contain sufficient or distinguishable visual evidence for a reliable disease diagnosis. "
+                "AgriShield does not force a guess when confidence is low to avoid recommending improper chemical pesticides."
+            ),
+            "symptoms": ["Atypical or low-contrast foliar markings", "Blur or insufficient lesion definition"],
+            "causes": "Blurry lens focus, atypical lesion morphology, or illumination glare outside model calibration distribution.",
+            "prevention": ["Scout adjacent healthy and symptomatic foliage across the plot"],
+            "treatment": {
+                "biological": ["Isolate symptomatic plant and monitor for progressive spot expansion"],
+                "chemical": ["Hold chemical sprays until clear symptom manifestation is verified by an agronomist"],
+            },
+            "recommended_action": "Capture a clear, well-focused close-up photograph of the affected leaf showing both lesions and green margins under natural daylight.",
+            "top_candidates": candidates,
+            "image_filename": unique_filename,
+            "image_quality": validation.quality_audit,
+            "status": "Diagnosis Uncertain / OOD",
+        }
+
+    # 4. Valid Diagnostic Output & Database Persistence
     record_id = None
     if db is not None:
         try:
@@ -351,6 +420,7 @@ def run_plant_diagnosis(
         "is_valid_plant": True,
         "plant_confidence": validation.plant_confidence,
         "is_ambiguous_image": validation.is_ambiguous,
+        "is_uncertain": False,
         "rejection_reason": None,
         "id": record_id,
         "crop": disease_info["crop"],
@@ -358,6 +428,8 @@ def run_plant_diagnosis(
         "class_key": predicted_class,
         "is_healthy": disease_info["is_healthy"],
         "confidence": confidence,
+        "calibrated_confidence": confidence,
+        "confidence_level": conf_level,
         "severity": disease_info["severity"],
         "pathogen_type": disease_info.get("pathogen_type", "Unknown"),
         "description": disease_info["description"],
@@ -367,6 +439,7 @@ def run_plant_diagnosis(
         "treatment": disease_info["treatment"],
         "top_candidates": candidates,
         "image_filename": unique_filename,
+        "image_quality": validation.quality_audit,
         "status": "Diagnosis Completed",
     }
 

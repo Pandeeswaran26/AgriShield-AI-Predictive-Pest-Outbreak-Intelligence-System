@@ -712,7 +712,7 @@ export default function Predict() {
                 </div>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Evaluated across 14 meteorological & seasonal parameters using historical surveillance models.
+                Evaluated across 14 meteorological & seasonal field parameters.
               </p>
             </div>
 
@@ -730,7 +730,7 @@ export default function Predict() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Model Confidence:</span>
+                    <span className="text-slate-400">Diagnosis Confidence:</span>
                     <span className="font-bold text-emerald-400">
                       {assessmentResult.decision_assessment.foliar_pathology_assessment.confidence}%
                     </span>

@@ -13,7 +13,7 @@ from plants.router import router as plants_router
 
 from .schemas import PredictionRequest, AutoPredictionRequest
 from .prediction import predict, predict_all_pests_for_crop, predict_forecast_risk
-from history.models import PredictionHistory
+from history.models import PredictionHistory, FarmerAction, FollowUpOutcome, ModelVersionRecord
 from history.router import router as history_router
 from history.service import create_prediction_history, create_auto_prediction_history
 from dashboard.router import router as dashboard_router
@@ -27,7 +27,12 @@ from weather.router import router as weather_router
 from weather.service import get_weather_snapshot_by_coordinates, get_forecast_7days
 from diagnosis.models import PlantDiagnosisRecord
 from diagnosis.router import router as diagnosis_router
+from irrigation.router import router as irrigation_router
+from irrigation.history_router import router as irrigation_history_router
+from irrigation.history_models import IrrigationHistory
+from irrigation.scheduler import create_irrigation_scheduler
 
+# Create all tables (including IrrigationHistory)
 Base.metadata.create_all(bind=engine)
 
 
@@ -80,16 +85,67 @@ def _ensure_db_migrations(target_engine):
                     if col_name not in existing_plant_cols:
                         conn.execute(text(f"ALTER TABLE plants ADD COLUMN {col_name} {col_type}"))
                 conn.commit()
+        # Migrate otps table
+        if "otps" in inspector.get_table_names():
+            existing_otp_cols = {col["name"] for col in inspector.get_columns("otps")}
+            otp_cols_to_add = [
+                ("email", "VARCHAR"),
+                ("phone", "VARCHAR"),
+            ]
+            with target_engine.connect() as conn:
+                for col_name, col_type in otp_cols_to_add:
+                    if col_name not in existing_otp_cols:
+                        conn.execute(text(f"ALTER TABLE otps ADD COLUMN {col_name} {col_type}"))
+                # If old phone_number column exists, backfill phone and relax NOT NULL constraint
+                if "phone_number" in existing_otp_cols:
+                    try:
+                        conn.execute(text("ALTER TABLE otps ALTER COLUMN phone_number DROP NOT NULL"))
+                    except Exception:
+                        pass
+                    if "phone" in existing_otp_cols or True:
+                        conn.execute(text("UPDATE otps SET phone = phone_number WHERE phone IS NULL AND phone_number IS NOT NULL"))
+                conn.commit()
+
+        # Migrate users table
+        if "users" in inspector.get_table_names():
+            existing_user_cols = {col["name"] for col in inspector.get_columns("users")}
+            user_cols_to_add = [
+                ("phone", "VARCHAR"),
+            ]
+            with target_engine.connect() as conn:
+                for col_name, col_type in user_cols_to_add:
+                    if col_name not in existing_user_cols:
+                        conn.execute(text(f"ALTER TABLE users ADD COLUMN {col_name} {col_type}"))
+                if "phone_number" in existing_user_cols and "phone" in existing_user_cols:
+                    conn.execute(text("UPDATE users SET phone = phone_number WHERE phone IS NULL AND phone_number IS NOT NULL"))
+                conn.commit()
     except Exception as exc:
         print(f"Non-fatal migration notice: {exc}")
 
 
 _ensure_db_migrations(engine)
 
+# ─── Lifespan: start/stop APScheduler ────────────────────────────────
+from contextlib import asynccontextmanager
+
+_irrigation_scheduler = create_irrigation_scheduler()
+
+@asynccontextmanager
+async def lifespan(app):
+    _irrigation_scheduler.start()
+    import logging
+    logging.getLogger("agrishield.irrigation.scheduler").info(
+        "[IrrigationScheduler] Started — morning (6 AM) & evening (6 PM) dispatches active."
+    )
+    yield
+    _irrigation_scheduler.shutdown(wait=False)
+
+
 app = FastAPI(
     title="AgriShield AI API",
-    description="Predictive Pest Outbreak Intelligence System",
-    version="1.0.0",
+    description="Predictive Pest Outbreak Intelligence & Agricultural Decision-Support System",
+    version="2.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -454,3 +510,5 @@ app.include_router(report_router)
 app.include_router(explain_router)
 app.include_router(weather_router)
 app.include_router(diagnosis_router)
+app.include_router(irrigation_router)
+app.include_router(irrigation_history_router)

@@ -10,9 +10,13 @@ class PlantBase(BaseModel):
     planting_date: Optional[str] = None
     growth_stage: Optional[str] = Field(None, max_length=60)
     field_name: Optional[str] = Field(None, max_length=100)
+    field_position: Optional[str] = Field(None, max_length=120, description="Field position / zone / ridge")
     field_size: Optional[float] = Field(None, ge=0.0)
     field_size_unit: Optional[str] = Field("acres", max_length=20)
     irrigation_method: Optional[str] = Field(None, max_length=60)
+    irrigation_frequency: Optional[str] = Field(None, max_length=60, description="e.g. 2 times daily, Every 2 days")
+    irrigation_hours: Optional[float] = Field(None, ge=0.0, le=24.0, description="Hours runtime per irrigation cycle")
+    auto_irrigation_alerts: Optional[bool] = Field(True, description="Send automatic email alert when irrigation needed")
     soil_type: Optional[str] = Field(None, max_length=60)
     soil_moisture: Optional[float] = Field(None, ge=0.0, le=100.0)
     soil_ph: Optional[float] = Field(None, ge=0.0, le=14.0)
@@ -40,9 +44,13 @@ class PlantUpdate(BaseModel):
     planting_date: Optional[str] = None
     growth_stage: Optional[str] = None
     field_name: Optional[str] = None
+    field_position: Optional[str] = None
     field_size: Optional[float] = Field(None, ge=0.0)
     field_size_unit: Optional[str] = None
     irrigation_method: Optional[str] = None
+    irrigation_frequency: Optional[str] = None
+    irrigation_hours: Optional[float] = Field(None, ge=0.0, le=24.0)
+    auto_irrigation_alerts: Optional[bool] = None
     soil_type: Optional[str] = None
     soil_moisture: Optional[float] = Field(None, ge=0.0, le=100.0)
     soil_ph: Optional[float] = Field(None, ge=0.0, le=14.0)

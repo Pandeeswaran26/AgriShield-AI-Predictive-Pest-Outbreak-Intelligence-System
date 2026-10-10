@@ -1,0 +1,212 @@
+{
+  "benchmark_timestamp": "2026-09-23T16:41:54.465885+00:00",
+  "dataset_samples": 24846,
+  "train_samples": 13583,
+  "test_samples": 11263,
+  "validation_strategy": "Temporal Holdout (Year-based)",
+  "models_compared": [
+    {
+      "model_name": "ExtraTrees",
+      "mae": 529.51,
+      "rmse": 1749.276,
+      "r2": 0.056,
+      "accuracy": 63.1,
+      "precision": 50.1,
+      "recall": 49.5,
+      "f1_score": 49.7,
+      "training_time_sec": 1.37,
+      "confusion_matrix": [
+        [
+          4585,
+          712,
+          968
+        ],
+        [
+          553,
+          167,
+          361
+        ],
+        [
+          979,
+          588,
+          2350
+        ]
+      ]
+    },
+    {
+      "model_name": "RandomForest",
+      "mae": 538.666,
+      "rmse": 1802.028,
+      "r2": -0.001,
+      "accuracy": 60.1,
+      "precision": 48.3,
+      "recall": 47.2,
+      "f1_score": 47.3,
+      "training_time_sec": 1.54,
+      "confusion_matrix": [
+        [
+          4616,
+          710,
+          939
+        ],
+        [
+          578,
+          191,
+          312
+        ],
+        [
+          1179,
+          773,
+          1965
+        ]
+      ]
+    },
+    {
+      "model_name": "GradientBoosting",
+      "mae": 512.603,
+      "rmse": 1781.428,
+      "r2": 0.021,
+      "accuracy": 62.3,
+      "precision": 49.9,
+      "recall": 49.1,
+      "f1_score": 49.3,
+      "training_time_sec": 7.12,
+      "confusion_matrix": [
+        [
+          4600,
+          726,
+          939
+        ],
+        [
+          549,
+          179,
+          353
+        ],
+        [
+          959,
+          716,
+          2242
+        ]
+      ]
+    },
+    {
+      "model_name": "XGBoost",
+      "mae": 507.354,
+      "rmse": 1780.636,
+      "r2": 0.022,
+      "accuracy": 62.5,
+      "precision": 50.9,
+      "recall": 50.2,
+      "f1_score": 50.2,
+      "training_time_sec": 0.2,
+      "confusion_matrix": [
+        [
+          4485,
+          817,
+          963
+        ],
+        [
+          530,
+          209,
+          342
+        ],
+        [
+          844,
+          732,
+          2341
+        ]
+      ]
+    },
+    {
+      "model_name": "LightGBM",
+      "mae": 504.035,
+      "rmse": 1724.366,
+      "r2": 0.083,
+      "accuracy": 63.1,
+      "precision": 50.4,
+      "recall": 49.6,
+      "f1_score": 49.8,
+      "training_time_sec": 0.16,
+      "confusion_matrix": [
+        [
+          4669,
+          718,
+          878
+        ],
+        [
+          562,
+          181,
+          338
+        ],
+        [
+          1050,
+          615,
+          2252
+        ]
+      ]
+    },
+    {
+      "model_name": "CatBoost",
+      "mae": 498.52,
+      "rmse": 1752.989,
+      "r2": 0.052,
+      "accuracy": 63.1,
+      "precision": 52.0,
+      "recall": 51.5,
+      "f1_score": 51.3,
+      "training_time_sec": 0.92,
+      "confusion_matrix": [
+        [
+          4476,
+          864,
+          925
+        ],
+        [
+          478,
+          235,
+          368
+        ],
+        [
+          761,
+          755,
+          2401
+        ]
+      ]
+    }
+  ],
+  "best_model": {
+    "model_name": "LightGBM",
+    "mae": 504.035,
+    "rmse": 1724.366,
+    "r2": 0.083,
+    "accuracy": 63.1,
+    "precision": 50.4,
+    "recall": 49.6,
+    "f1_score": 49.8,
+    "training_time_sec": 0.16,
+    "confusion_matrix": [
+      [
+        4669,
+        718,
+        878
+      ],
+      [
+        562,
+        181,
+        338
+      ],
+      [
+        1050,
+        615,
+        2252
+      ]
+    ]
+  },
+  "calibration": {
+    "method": "Isotonic Regression",
+    "uncalibrated_brier_score": 0.2146,
+    "calibrated_brier_score": 0.174
+  },
+  "model_version": "2.1.0",
+  "feature_schema_version": "FS-3"
+}

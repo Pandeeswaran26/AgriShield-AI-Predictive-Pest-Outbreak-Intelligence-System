@@ -35,6 +35,7 @@ import StatCard from "../components/StatCard";
 import RiskBadge from "../components/RiskBadge";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlantModal from "../components/PlantModal";
+import FarmMap from "../components/FarmMap";
 import { useAuth } from "../context/AuthContext";
 import * as dashboardService from "../services/dashboardService";
 import * as weatherService from "../services/weatherService";
@@ -52,6 +53,12 @@ export default function Dashboard() {
   const [cropAnalysis, setCropAnalysis] = useState([]);
   const [weatherSnapshot, setWeatherSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showMap, setShowMap] = useState(false);
+  const [logActionField, setLogActionField] = useState(null);
+  const [logActionType, setLogActionType] = useState("Irrigation");
+  const [logActionNote, setLogActionNote] = useState("");
+  const [loggingAction, setLoggingAction] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
   // Plant Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,6 +111,35 @@ export default function Dashboard() {
       loadDashboardData();
     } catch {
       toast.error("Failed to register field.");
+    }
+  };
+
+  const handleLogAction = async () => {
+    if (!logActionField) return;
+    setLoggingAction(true);
+    try {
+      const token = localStorage.getItem("agrishield_token");
+      await fetch(`${API_BASE}/api/farmer-actions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          plant_id: logActionField.id,
+          action_type: logActionType,
+          description: logActionNote || `${logActionType} applied on ${logActionField.name}`,
+          performed_at: new Date().toISOString(),
+        }),
+      });
+      toast.success(`✓ Action logged: ${logActionType}`);
+      setLogActionField(null);
+      setLogActionNote("");
+      setLogActionType("Irrigation");
+    } catch {
+      toast.error("Failed to log action.");
+    } finally {
+      setLoggingAction(false);
     }
   };
 
@@ -409,7 +445,7 @@ export default function Dashboard() {
             <Sprout size={16} className="text-emerald-400" />
             Crops Under Protection
           </h3>
-          <p className="text-xs text-slate-400 mb-4">Distribution of agricultural models active in AgriShield.</p>
+          <p className="text-xs text-slate-400 mb-4">Distribution of crops monitored across your fields.</p>
           <div className="h-64">
             {cropAnalysis && cropAnalysis.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -431,6 +467,78 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Farm Surveillance Map */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-slate-200 text-sm flex items-center gap-2">
+            <Compass size={16} className="text-emerald-400" />
+            Farm Surveillance Map
+          </h2>
+          <button
+            onClick={() => setShowMap(v => !v)}
+            className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:border-emerald-500/50 transition"
+          >
+            {showMap ? "Hide Map" : "Show Map"}
+          </button>
+        </div>
+        {showMap && <FarmMap plants={fields} onFieldClick={(f) => setLogActionField(f)} />}
+      </div>
+
+      {/* Log Action Modal */}
+      {logActionField && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setLogActionField(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-slate-100 text-base mb-1">Log Action Taken</h3>
+            <p className="text-xs text-slate-400 mb-5">Record what you applied on <strong className="text-emerald-400">{logActionField.name}</strong></p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Action Type</label>
+                <select
+                  value={logActionType}
+                  onChange={e => setLogActionType(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500"
+                >
+                  {["Irrigation","Fertilizer","Chemical Spray","Biological Treatment","Scouting","No Action","Other"].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Notes (optional)</label>
+                <textarea
+                  value={logActionNote}
+                  onChange={e => setLogActionNote(e.target.value)}
+                  placeholder="e.g. Applied Chlorpyrifos 2L/acre at 6am..."
+                  rows={3}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 resize-none focus:outline-none focus:border-emerald-500 placeholder-slate-600"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setLogActionField(null)}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogAction}
+                disabled={loggingAction}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 text-sm font-bold transition"
+              >
+                {loggingAction ? "Saving…" : "✓ Log Action"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal for adding plants */}
       <PlantModal

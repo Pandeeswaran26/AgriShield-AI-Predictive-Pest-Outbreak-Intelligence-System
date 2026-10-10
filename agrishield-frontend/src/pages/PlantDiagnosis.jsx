@@ -609,7 +609,7 @@ export default function PlantDiagnosis() {
               </p>
               <div className="mt-6 flex items-center gap-2 text-xs text-canopy font-medium">
                 <ShieldCheck size={16} />
-                Trained on 87,000+ PlantVillage leaf observation records
+                Integrated Pest Management (IPM) & pathology diagnostic intelligence
               </div>
             </div>
           )}
@@ -623,10 +623,9 @@ export default function PlantDiagnosis() {
                 </div>
               </div>
               <div>
-                <h3 className="text-base font-semibold text-white">Extracting Foliar Features</h3>
+                <h3 className="text-base font-semibold text-white">Analyzing Foliar Symptoms</h3>
                 <p className="text-xs text-mist/60 mt-1 max-w-xs">
-                  Running multi-scale convolutional pattern matching, chlorosis detection, and
-                  confidence calculations...
+                  Evaluating foliar discoloration, necrotic lesions, and pathogen symptom markers...
                 </p>
               </div>
             </div>
@@ -690,13 +689,58 @@ export default function PlantDiagnosis() {
           {/* ── Full Diagnosis Panel: valid plant leaf ─────────────────── */}
           {diagnosisResult && !diagnosisResult._rejected && !diagnosisResult._error && (
             <div className="space-y-4 animate-fadeIn">
-              {/* Ambiguous image warning banner */}
-              {diagnosisResult.is_ambiguous_image && (
+              {/* Quality Audit Scorecard */}
+              {diagnosisResult.image_quality && (
+                <div className="card p-4 border border-field-800 bg-field-950/60">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-canopy uppercase tracking-wider flex items-center gap-1.5">
+                      <Sliders size={13} />
+                      Input Quality Audit Scorecard
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                      diagnosisResult.image_quality.blur_detected || diagnosisResult.image_quality.dark_detected || diagnosisResult.image_quality.bright_detected
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    }`}>
+                      {diagnosisResult.image_quality.blur_detected || diagnosisResult.image_quality.dark_detected || diagnosisResult.image_quality.bright_detected
+                        ? "Quality Advisory"
+                        : "Optimal Quality"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-2 rounded-xl bg-field-900/60 border border-mist/5">
+                      <span className="text-[10px] text-mist/50 block">Sharpness (Blur)</span>
+                      <span className={`font-bold block mt-0.5 ${diagnosisResult.image_quality.blur_detected ? "text-amber-400" : "text-emerald-400"}`}>
+                        {diagnosisResult.image_quality.blur_detected ? "Blurry" : "Sharp"} ({diagnosisResult.image_quality.blur_score || 0})
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-field-900/60 border border-mist/5">
+                      <span className="text-[10px] text-mist/50 block">Illumination</span>
+                      <span className={`font-bold block mt-0.5 ${diagnosisResult.image_quality.dark_detected ? "text-rose-400" : diagnosisResult.image_quality.bright_detected ? "text-amber-400" : "text-emerald-400"}`}>
+                        {diagnosisResult.image_quality.dark_detected ? "Too Dark" : diagnosisResult.image_quality.bright_detected ? "Overexposed" : "Balanced"}
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-field-900/60 border border-mist/5">
+                      <span className="text-[10px] text-mist/50 block">Leaf Coverage</span>
+                      <span className="font-bold text-canopy block mt-0.5">
+                        {diagnosisResult.plant_confidence !== undefined ? `${(diagnosisResult.plant_confidence * 100).toFixed(0)}%` : "Verified"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Ambiguous or Out-Of-Distribution Warning Banner */}
+              {(diagnosisResult.is_ambiguous_image || diagnosisResult.is_uncertain) && (
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
                   <AlertTriangle size={15} className="shrink-0 mt-0.5" />
                   <span>
-                    <span className="font-semibold">Low leaf confidence ({diagnosisResult.plant_confidence !== undefined ? `${(diagnosisResult.plant_confidence * 100).toFixed(0)}%` : "—"}).</span>{" "}
-                    The image could not be confidently identified as a clear plant leaf. For best results, upload a close-up photo with the leaf filling the frame. The disease prediction below may be less accurate.
+                    <span className="font-semibold">
+                      {diagnosisResult.is_uncertain ? "Inconclusive Foliar Symptoms." : "Low Image Clarity Score."}
+                    </span>{" "}
+                    {diagnosisResult.is_uncertain
+                      ? "Leaf symptoms do not conclusively match known crop diseases. AgriShield avoids speculative classification to prevent improper chemical applications."
+                      : "The image has borderline leaf characteristics. Consider capturing a sharper, close-up photograph under natural daylight."}
                   </span>
                 </div>
               )}
@@ -704,7 +748,9 @@ export default function PlantDiagnosis() {
               {/* Primary Diagnostic Card */}
               <div
                 className={`card p-6 border ${
-                  diagnosisResult.is_healthy
+                  diagnosisResult.is_uncertain || diagnosisResult.disease?.includes("UNKNOWN")
+                    ? "border-amber-500/40 bg-gradient-to-br from-field-900 to-amber-950/30"
+                    : diagnosisResult.is_healthy
                     ? "border-emerald-500/40 bg-gradient-to-br from-field-900 to-emerald-950/30"
                     : diagnosisResult.severity === "High"
                     ? "border-alert/40 bg-gradient-to-br from-field-900 to-rose-950/30"
@@ -713,20 +759,22 @@ export default function PlantDiagnosis() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-field-900/10 dark:border-mist/10">
                   <div>
-                    <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className="px-2.5 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider bg-canopy/20 text-canopy border border-canopy/30">
                         {diagnosisResult.crop}
                       </span>
                       <span
                         className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
-                          diagnosisResult.is_healthy
+                          diagnosisResult.is_uncertain || diagnosisResult.disease?.includes("UNKNOWN")
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            : diagnosisResult.is_healthy
                             ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                             : diagnosisResult.severity === "High"
                             ? "bg-alert/20 text-rose-400 border border-alert/30"
                             : "bg-clay/20 text-amber-400 border border-clay/30"
                         }`}
                       >
-                        {diagnosisResult.is_healthy ? "Healthy Plant" : `${diagnosisResult.severity} Severity`}
+                        {diagnosisResult.is_uncertain ? "Inconclusive" : diagnosisResult.is_healthy ? "Healthy Plant" : `${diagnosisResult.severity} Severity`}
                       </span>
                       <span className="text-xs text-mist/50">
                         {diagnosisResult.pathogen_type}
@@ -869,7 +917,7 @@ export default function PlantDiagnosis() {
               {diagnosisResult.top_candidates && diagnosisResult.top_candidates.length > 1 && (
                 <div className="card p-4">
                   <h4 className="text-xs font-semibold text-mist/60 uppercase tracking-wider mb-2.5">
-                    Class Probability Distribution (Top Matches)
+                    Differential Diagnostic Matches
                   </h4>
                   <div className="space-y-2">
                     {diagnosisResult.top_candidates.map((cand) => (

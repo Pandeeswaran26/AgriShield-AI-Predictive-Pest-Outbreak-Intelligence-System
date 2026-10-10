@@ -10,13 +10,13 @@ const STEPS = [
   },
   {
     icon: Activity,
-    title: "Extra Trees model scores it",
-    text: "A model trained on multi-season cotton and rice pest records returns a pest-pressure value in real time.",
+    title: "AI Risk Engine scores it",
+    text: "Weather and regional field conditions are cross-referenced to calculate pest pressure and outbreak risk in real time.",
   },
   {
     icon: ShieldCheck,
     title: "Act before the outbreak",
-    text: "Get a risk level, SHAP-backed explanation, and pest-specific treatment and prevention steps.",
+    text: "Get a clear risk rating, primary environmental drivers, and targeted IPM treatment & prevention guidance.",
   },
 ];
 
@@ -117,9 +117,9 @@ export default function Landing() {
       {/* Coverage */}
       <section id="coverage" className="border-t border-mist/10 bg-field-900/60">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="font-display text-2xl font-semibold md:text-3xl">Built for two crops, deeply</h2>
+          <h2 className="font-display text-2xl font-semibold md:text-3xl">Comprehensive Crop Protection</h2>
           <p className="mt-2 max-w-lg text-mist/60">
-            Trained on multi-season observation records rather than generic pest databases.
+            Calibrated for regional microclimates and pest population dynamics.
           </p>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {COVERAGE.map(({ crop, pests }) => (

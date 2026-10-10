@@ -6,7 +6,11 @@ from datetime import datetime, timedelta
 from email.message import EmailMessage
 
 from fastapi import HTTPException
-from jose import jwt, JWTError
+try:
+    from jose import jwt, JWTError
+except ImportError:
+    import jwt
+    from jwt.exceptions import PyJWTError as JWTError
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 

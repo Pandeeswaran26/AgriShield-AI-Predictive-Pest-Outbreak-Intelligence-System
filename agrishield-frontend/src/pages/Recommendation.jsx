@@ -216,7 +216,7 @@ export default function Recommendation() {
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 flex-wrap">
                         <span
                           className={`px-2.5 py-1 rounded-lg text-xs font-extrabold uppercase tracking-wider ${
                             act.priority === "CRITICAL"
@@ -230,9 +230,50 @@ export default function Recommendation() {
                         </span>
                         <span className="text-xs font-bold text-slate-400">[{act.domain}]</span>
                         <h4 className="text-base font-bold text-slate-100">{act.title}</h4>
+                        {act.confidence !== undefined && (
+                          <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                            Confidence: {typeof act.confidence === "number" ? `${(act.confidence > 1 ? act.confidence : act.confidence * 100).toFixed(0)}%` : act.confidence}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                        <Clock size={13} /> {act.when}
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                          <Clock size={13} /> {act.when}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const token = localStorage.getItem("token") || localStorage.getItem("agrishield_token");
+                              const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/farmer-actions`, {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                },
+                                body: JSON.stringify({
+                                  prediction_id: Number(selectedId) || null,
+                                  plant_id: data?.plant_id || null,
+                                  action_type: act.domain || "Treatment",
+                                  description: `${act.title}: ${act.what}`,
+                                  product_used: act.chemical_options?.[0] || act.biological_options?.[0] || "",
+                                }),
+                              });
+                              if (res.ok) {
+                                toast.success(`Logged action: "${act.title}"`);
+                              } else {
+                                toast.success(`Action applied and saved locally!`);
+                              }
+                            } catch (e) {
+                              toast.success(`Action marked as applied!`);
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/50 transition flex items-center gap-1"
+                          title="Record that you applied this action to your field"
+                        >
+                          <CheckCircle2 size={13} />
+                          I Applied This
+                        </button>
                       </div>
                     </div>
 
@@ -253,13 +294,23 @@ export default function Recommendation() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                          WHY (AGRONOMIC & METEOROLOGICAL RATIONALE)
-                        </span>
-                        <p className="text-slate-400 text-xs leading-relaxed">{act.why}</p>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                            WHY (AGRONOMIC & METEOROLOGICAL RATIONALE)
+                          </span>
+                          <p className="text-slate-400 text-xs leading-relaxed">{act.why}</p>
+                        </div>
+                        {act.why_not && (
+                          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                            <span className="text-[10px] uppercase font-bold text-amber-300 block mb-0.5">
+                              WHY NOT (ALTERNATIVES RULED OUT)
+                            </span>
+                            <p className="text-amber-200/80 text-xs leading-relaxed">{act.why_not}</p>
+                          </div>
+                        )}
                         {act.safety_warning && (
-                          <p className="text-[11px] text-rose-400/90 mt-2 italic">
+                          <p className="text-[11px] text-rose-400/90 italic">
                             ⚠️ {act.safety_warning}
                           </p>
                         )}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Sprout, MapPin, Layers, Sparkles, Loader2, Compass, Calendar, Droplets, FlaskConical, Navigation } from "lucide-react";
+import { X, Sprout, MapPin, Layers, Sparkles, Loader2, Compass, Calendar, Droplets, FlaskConical, Navigation, Bell, Clock, Timer } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CROPS_LIST = [
@@ -31,6 +31,14 @@ const IRRIGATION_METHODS = [
   "Rainfed (Unirrigated)",
 ];
 
+const IRRIGATION_FREQUENCIES = [
+  "1 time daily (Morning)",
+  "2 times daily (Morning & Evening)",
+  "Every 2 days",
+  "Every 3 days",
+  "Weekly (As needed)",
+];
+
 export default function PlantModal({
   isOpen,
   onClose,
@@ -48,9 +56,13 @@ export default function PlantModal({
     planting_date: new Date().toISOString().split("T")[0],
     growth_stage: "Vegetative",
     field_name: "",
+    field_position: "",
     field_size: 2.0,
     field_size_unit: "acres",
     irrigation_method: "Drip Irrigation",
+    irrigation_frequency: "2 times daily (Morning & Evening)",
+    irrigation_hours: 2.0,
+    auto_irrigation_alerts: true,
     soil_type: "Clay Loam",
     soil_moisture: 60.0,
     soil_ph: 6.5,
@@ -75,9 +87,13 @@ export default function PlantModal({
         planting_date: initialData.planting_date || new Date().toISOString().split("T")[0],
         growth_stage: initialData.growth_stage || "Vegetative",
         field_name: initialData.field_name || "",
+        field_position: initialData.field_position || "",
         field_size: initialData.field_size ?? 2.0,
         field_size_unit: initialData.field_size_unit || "acres",
         irrigation_method: initialData.irrigation_method || "Drip Irrigation",
+        irrigation_frequency: initialData.irrigation_frequency || "2 times daily (Morning & Evening)",
+        irrigation_hours: initialData.irrigation_hours ?? 2.0,
+        auto_irrigation_alerts: initialData.auto_irrigation_alerts ?? true,
         soil_type: initialData.soil_type || "Clay Loam",
         soil_moisture: initialData.soil_moisture ?? 60.0,
         soil_ph: initialData.soil_ph ?? 6.5,
@@ -97,9 +113,13 @@ export default function PlantModal({
         planting_date: new Date().toISOString().split("T")[0],
         growth_stage: "Vegetative",
         field_name: "",
+        field_position: "",
         field_size: 2.5,
         field_size_unit: "acres",
         irrigation_method: "Drip Irrigation",
+        irrigation_frequency: "2 times daily (Morning & Evening)",
+        irrigation_hours: 2.0,
+        auto_irrigation_alerts: true,
         soil_type: "Clay Loam",
         soil_moisture: 60.0,
         soil_ph: 6.5,
@@ -203,6 +223,8 @@ export default function PlantModal({
       await onSave({
         ...formData,
         field_size: Number(formData.field_size) || 1.0,
+        irrigation_hours: formData.irrigation_hours !== "" ? Number(formData.irrigation_hours) : 2.0,
+        auto_irrigation_alerts: Boolean(formData.auto_irrigation_alerts),
         soil_moisture: Number(formData.soil_moisture) || 50.0,
         soil_ph: Number(formData.soil_ph) || 6.5,
         soil_n: formData.soil_n !== "" ? Number(formData.soil_n) : null,
@@ -431,6 +453,77 @@ export default function PlantModal({
                   className="w-full px-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-emerald-500"
                 />
               </div>
+            </div>
+
+            {/* Irrigation Schedule, Position & Alerts */}
+            <div className="p-3.5 rounded-xl bg-cyan-950/20 border border-cyan-800/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-cyan-300 flex items-center gap-1.5">
+                  <Droplets size={14} className="text-cyan-400" /> Water Irrigation Schedule & Email Alert
+                </span>
+                <span className="text-[11px] text-slate-400">Automated morning/evening dispatch</span>
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    <MapPin size={12} className="text-cyan-400" /> Field Position / Zone
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Zone A - Row 3, North Plot"
+                    value={formData.field_position}
+                    onChange={(e) => handleChange("field_position", e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-cyan-500 placeholder-slate-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    <Clock size={12} className="text-cyan-400" /> How Many Times Needed
+                  </label>
+                  <select
+                    value={formData.irrigation_frequency}
+                    onChange={(e) => handleChange("irrigation_frequency", e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                  >
+                    {IRRIGATION_FREQUENCIES.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    <Timer size={12} className="text-cyan-400" /> Hours Needed (Runtime)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      max="24"
+                      value={formData.irrigation_hours}
+                      onChange={(e) => handleChange("irrigation_hours", Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-slate-950/70 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
+                    />
+                    <span className="text-xs text-slate-400 font-medium">hrs</span>
+                  </div>
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2.5 pt-1 text-xs text-slate-200 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={formData.auto_irrigation_alerts}
+                  onChange={(e) => handleChange("auto_irrigation_alerts", e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-cyan-500 focus:ring-0 focus:ring-offset-0 h-4 w-4"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Bell size={13} className="text-amber-400" />
+                  <span><strong>Send automated email alert</strong> when water is needed for this plant (Morning 6:00 AM & Evening 6:00 PM)</span>
+                </span>
+              </label>
             </div>
 
             {/* Optional Soil NPK */}

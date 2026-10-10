@@ -65,7 +65,7 @@ export default function PestRankCard({ pest, rank, maxPestValue = 30 }) {
           <span className="font-bold text-slate-200">
             {pestVal.toFixed(2)}{" "}
             <span className="text-slate-400 font-normal">
-              ({pest.confidence ? `${pest.confidence}% confidence` : "model estimated"})
+              ({pest.confidence ? `${pest.confidence}% confidence` : "calibrated index"})
             </span>
           </span>
         </div>

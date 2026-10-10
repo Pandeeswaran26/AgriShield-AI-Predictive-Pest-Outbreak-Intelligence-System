@@ -17,6 +17,8 @@ import Analytics from "./pages/Analytics";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
 import PlantDiagnosis from "./pages/PlantDiagnosis";
+import IrrigationAI from "./pages/IrrigationAI";
+import IrrigationHistory from "./pages/IrrigationHistory";
 
 
 export default function App() {
@@ -61,6 +63,9 @@ export default function App() {
           <Route path="analytics" element={<Analytics />} />
           <Route path="assistant" element={<Assistant />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="irrigation" element={<IrrigationAI />} />
+          <Route path="irrigation-history" element={<IrrigationHistory />} />
+
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
