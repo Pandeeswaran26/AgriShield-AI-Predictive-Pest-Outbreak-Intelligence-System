@@ -9,7 +9,6 @@ import {
   Leaf,
   FlaskConical,
   Wind,
-  Sun,
   ShieldCheck,
 } from "lucide-react";
 

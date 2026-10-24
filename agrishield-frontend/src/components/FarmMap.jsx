@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 
 /**
  * FarmMap — Interactive field surveillance map using SVG canvas.
@@ -23,7 +23,7 @@ function getRiskKey(riskLevel) {
 }
 
 // Deterministic pseudo-random scatter from plant id
-function getFieldPosition(id, total) {
+function getFieldPosition(id) {
   const seed = (id * 2654435761) >>> 0;
   const x = 8 + (((seed & 0xFFF) / 0xFFF) * 84);
   const y = 8 + ((((seed >> 12) & 0xFFF) / 0xFFF) * 80);
@@ -32,7 +32,6 @@ function getFieldPosition(id, total) {
 
 export default function FarmMap({ plants = [], onFieldClick }) {
   const [selected, setSelected] = useState(null);
-  const [tooltip, setTooltip] = useState(null);
   const svgRef = useRef(null);
 
   const handleMarkerClick = (plant) => {

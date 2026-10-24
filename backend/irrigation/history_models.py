@@ -10,6 +10,8 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Text, 
 from sqlalchemy.orm import relationship
 
 from database.database import Base
+from auth.models import User
+from plants.models import Plant
 
 
 class IrrigationHistory(Base):

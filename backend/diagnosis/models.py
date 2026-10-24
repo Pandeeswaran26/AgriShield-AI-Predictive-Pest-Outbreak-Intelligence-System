@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import json
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text
 from database.database import Base
+from auth.models import User
 
 
 def utc_now():

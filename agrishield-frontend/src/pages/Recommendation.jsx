@@ -2,11 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
-  Sprout,
-  ShieldAlert,
-  Leaf,
-  TrendingDown,
-  Search,
   ClipboardList,
   Sparkles,
   ArrowRight,
@@ -18,10 +13,6 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle2,
-  Calendar,
-  Layers,
-  Thermometer,
-  Wind,
 } from "lucide-react";
 import RiskBadge from "../components/RiskBadge";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -50,6 +41,7 @@ export default function Recommendation() {
         }
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -77,7 +69,6 @@ export default function Recommendation() {
   const irrigationPlan = structuredRecs?.irrigation_plan;
   const fertilizerPlan = structuredRecs?.fertilizer_plan;
   const weatherSprayGuidance = structuredRecs?.weather_spray_guidance;
-  const decisionAssessment = data?.decision_assessment;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -244,8 +235,8 @@ export default function Recommendation() {
                           type="button"
                           onClick={async () => {
                             try {
-                              const token = localStorage.getItem("token") || localStorage.getItem("agrishield_token");
-                              const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"}/api/farmer-actions`, {
+                              const apiBase = (typeof window !== "undefined" && window.location.hostname === "localhost") ? "http://localhost:8000" : (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000");
+                              const res = await fetch(`${apiBase}/api/farmer-actions`, {
                                 method: "POST",
                                 headers: {
                                   "Content-Type": "application/json",
@@ -264,7 +255,7 @@ export default function Recommendation() {
                               } else {
                                 toast.success(`Action applied and saved locally!`);
                               }
-                            } catch (e) {
+                            } catch {
                               toast.success(`Action marked as applied!`);
                             }
                           }}

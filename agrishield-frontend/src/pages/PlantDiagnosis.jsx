@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Camera,
@@ -16,9 +16,7 @@ import {
   Activity,
   ArrowRight,
   Info,
-  Bug,
   Droplets,
-  Layers,
   X,
   Eye,
   Sliders,
@@ -76,8 +74,6 @@ const SAMPLE_PRESETS = [
 ];
 
 export default function PlantDiagnosis() {
-  const navigate = useNavigate();
-
   // Selected file and preview
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -195,7 +191,7 @@ export default function PlantDiagnosis() {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
-    } catch (err) {
+    } catch {
       setIsCameraActive(false);
       // If WebRTC fails or denied, fall back to native device camera input
       if (cameraInputRef.current) {

@@ -1,7 +1,21 @@
 import axios from "axios";
 
+export const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "";
+    }
+    if (hostname && (!envUrl || envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
+      return `http://${hostname}:8000`;
+    }
+  }
+  return envUrl || "";
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+  baseURL: getApiBaseUrl(),
 });
 
 api.interceptors.request.use((config) => {
@@ -16,10 +30,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("agrishield_token");
-      localStorage.removeItem("agrishield_user");
-      if (!window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+      const isAuthEndpoint = error.config?.url?.includes("/auth/");
+      const isLoginPage =
+        typeof window !== "undefined" &&
+        (window.location.pathname.startsWith("/login") || window.location.pathname.startsWith("/register"));
+      if (!isAuthEndpoint) {
+        localStorage.removeItem("agrishield_token");
+        localStorage.removeItem("agrishield_user");
+        if (!isLoginPage) {
+          window.location.href = "/login";
+        }
       }
     }
     return Promise.reject(error);

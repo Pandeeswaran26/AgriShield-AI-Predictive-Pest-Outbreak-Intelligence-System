@@ -1,0 +1,18 @@
+{
+  "name": "AgriShield AI",
+  "short_name": "AgriShield",
+  "description": "Predictive pest outbreak intelligence and crop advisory for farmers.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08110d",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/leaf.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

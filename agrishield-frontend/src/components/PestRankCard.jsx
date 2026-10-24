@@ -1,6 +1,6 @@
 import React from "react";
 import RiskBadge from "./RiskBadge";
-import { Bug, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Bug } from "lucide-react";
 
 export default function PestRankCard({ pest, rank, maxPestValue = 30 }) {
   const isTop = rank === 1;

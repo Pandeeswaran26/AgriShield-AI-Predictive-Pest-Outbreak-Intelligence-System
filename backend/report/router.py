@@ -13,7 +13,10 @@ router = APIRouter(
 
 @router.get("/{prediction_id}/report")
 def prediction_report(prediction_id: int, db: Session = Depends(get_db)):
-    pdf = generate_prediction_report(db, prediction_id)
+    try:
+        pdf = generate_prediction_report(db, prediction_id)
+    except RuntimeError as err:
+        raise HTTPException(status_code=503, detail=str(err))
 
     if pdf is None:
         raise HTTPException(status_code=404, detail="Prediction not found")

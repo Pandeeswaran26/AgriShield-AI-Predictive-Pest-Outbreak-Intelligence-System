@@ -52,7 +52,7 @@ def _compute_hsv(r: np.ndarray, g: np.ndarray, b: np.ndarray):
     hue[mask_g] = (60.0 * ((b[mask_g] - r[mask_g]) / delta[mask_g]) + 120) % 360
     hue[mask_b] = (60.0 * ((r[mask_b] - g[mask_b]) / delta[mask_b]) + 240) % 360
 
-    sat = np.where(max_c > 1e-8, delta / max_c, 0.0).astype(np.float32)
+    sat = np.where(max_c > 1e-8, delta / np.maximum(max_c, 1e-8), 0.0).astype(np.float32)
     val = max_c.astype(np.float32)
     return hue, sat, val
 
@@ -96,13 +96,20 @@ def _audit_image_quality(img_arr: np.ndarray, original_size: Optional[Tuple[int,
         score -= 0.20
     quality_score = max(0.1, min(1.0, score))
 
+    dark_detected = bool(mean_lum < 0.12)
+    bright_detected = bool(mean_lum > 0.88)
+    blur_score = round(blur_var * 1000, 2)
+
     audit = {
         "valid": bool(brightness_ok and contrast_ok and not blur_detected and resolution_ok),
         "quality_score": round(quality_score, 2),
         "leaf_detected": True,
         "blur_detected": bool(blur_detected),
         "blur_variance": round(blur_var * 1000, 3),
+        "blur_score": blur_score,
         "brightness_ok": bool(brightness_ok),
+        "dark_detected": dark_detected,
+        "bright_detected": bright_detected,
         "mean_luminance": round(mean_lum, 3),
         "contrast_ok": bool(contrast_ok),
         "rms_contrast": round(contrast_std, 3),

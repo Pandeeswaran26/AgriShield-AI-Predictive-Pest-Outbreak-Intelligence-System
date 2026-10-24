@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { Leaf, Loader2 } from "lucide-react";
+import { Leaf, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import * as authService from "../services/authService";
 import { useAuth } from "../context/AuthContext";
 
@@ -14,6 +14,9 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false);
   const [otp, setOtp] = useState("");
   const [resending, setResending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -22,16 +25,61 @@ export default function Register() {
     formState: { errors },
   } = useForm();
 
+  const clearError = () => {
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
+  };
+
   const onSubmit = async (values) => {
+    setErrorMessage(null);
+
+    // Verify password confirmation before submission
+    if (values.password !== values.confirm_password) {
+      const mismatchMsg = "Passwords do not match.";
+      setErrorMessage(mismatchMsg);
+      toast.error(mismatchMsg);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const data = await authService.register(values);
       setEmail(data.email);
       setStep("otp");
+      setErrorMessage(null);
       toast.success("OTP sent to your email");
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      toast.error(typeof detail === "string" ? detail : "Registration failed");
+      console.error("Registration error:", err);
+      let friendlyMessage = "Registration could not be completed. Please try again later.";
+
+      if (!err.response) {
+        friendlyMessage = "Unable to connect to the server. Please try again.";
+      } else if (err.response.status === 409) {
+        const detail = err.response.data?.detail;
+        friendlyMessage =
+          typeof detail === "string" && detail.trim()
+            ? detail
+            : "An account with this email already exists. Please log in.";
+      } else if (err.response.status === 400) {
+        const detail = err.response.data?.detail;
+        friendlyMessage =
+          typeof detail === "string" && detail.trim()
+            ? detail
+            : "Please check the information entered.";
+      } else if (err.response.status === 422) {
+        friendlyMessage = "Please check the information entered.";
+      } else if (err.response.status >= 500) {
+        friendlyMessage = "Registration could not be completed. Please try again later.";
+      } else {
+        const detail = err.response.data?.detail;
+        if (typeof detail === "string" && detail.trim()) {
+          friendlyMessage = detail;
+        }
+      }
+
+      setErrorMessage(friendlyMessage);
+      toast.error(friendlyMessage);
     } finally {
       setSubmitting(false);
     }
@@ -39,26 +87,44 @@ export default function Register() {
 
   const onVerify = async (e) => {
     e.preventDefault();
+    setErrorMessage(null);
     setSubmitting(true);
     try {
       await verifyOtp(email, otp);
       toast.success("Account verified");
       navigate("/app/dashboard", { replace: true });
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      toast.error(typeof detail === "string" ? detail : "Invalid OTP");
+      let friendlyMessage = "Invalid or expired OTP.";
+      if (!err.response) {
+        friendlyMessage = "Unable to connect to the server. Please try again.";
+      } else {
+        const detail = err.response?.data?.detail;
+        if (typeof detail === "string" && detail.trim()) {
+          friendlyMessage = detail;
+        }
+      }
+      setErrorMessage(friendlyMessage);
+      toast.error(friendlyMessage);
     } finally {
       setSubmitting(false);
     }
   };
 
   const onResend = async () => {
+    setErrorMessage(null);
     setResending(true);
     try {
       await authService.resendOtp({ email, purpose: "register" });
-      toast.success("OTP resent");
-    } catch {
-      toast.error("Could not resend OTP");
+      toast.success("OTP resent to your email");
+    } catch (err) {
+      let msg = "Could not resend OTP. Please try again later.";
+      if (!err.response) {
+        msg = "Unable to connect to the server. Please try again.";
+      } else if (err.response?.data?.detail) {
+        msg = err.response.data.detail;
+      }
+      setErrorMessage(msg);
+      toast.error(msg);
     } finally {
       setResending(false);
     }
@@ -80,13 +146,28 @@ export default function Register() {
               <h1 className="font-display text-xl font-semibold">Create your account</h1>
               <p className="mt-1 text-sm text-mist/55">Start scoring pest risk for your fields.</p>
 
+              {errorMessage && (
+                <div
+                  id="register-error-alert"
+                  role="alert"
+                  className="mt-4 flex items-start gap-2.5 rounded-lg border border-alert/30 bg-alert/10 p-3 text-xs text-alert"
+                >
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span className="leading-relaxed">{errorMessage}</span>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
                 <div>
                   <label className="label !text-mist/60">Full name</label>
                   <input
                     className="input !bg-field-950 !border-mist/15 !text-mist"
                     placeholder="Ravi Kumar"
-                    {...register("name", { required: "Name is required", minLength: { value: 2, message: "Too short" } })}
+                    {...register("name", {
+                      required: "Name is required",
+                      minLength: { value: 2, message: "Too short" },
+                      onChange: clearError,
+                    })}
                   />
                   {errors.name && <p className="mt-1 text-xs text-alert">{errors.name.message}</p>}
                 </div>
@@ -97,7 +178,10 @@ export default function Register() {
                     type="email"
                     className="input !bg-field-950 !border-mist/15 !text-mist"
                     placeholder="you@farm.com"
-                    {...register("email", { required: "Email is required" })}
+                    {...register("email", {
+                      required: "Email is required",
+                      onChange: clearError,
+                    })}
                   />
                   {errors.email && <p className="mt-1 text-xs text-alert">{errors.email.message}</p>}
                 </div>
@@ -110,6 +194,7 @@ export default function Register() {
                     {...register("phone", {
                       required: "Phone is required",
                       minLength: { value: 10, message: "Enter a valid phone number" },
+                      onChange: clearError,
                     })}
                   />
                   {errors.phone && <p className="mt-1 text-xs text-alert">{errors.phone.message}</p>}
@@ -120,36 +205,61 @@ export default function Register() {
                   <input
                     className="input !bg-field-950 !border-mist/15 !text-mist"
                     placeholder="Coimbatore, Tamil Nadu"
-                    {...register("location", { required: "Location is required" })}
+                    {...register("location", {
+                      required: "Location is required",
+                      onChange: clearError,
+                    })}
                   />
                   {errors.location && <p className="mt-1 text-xs text-alert">{errors.location.message}</p>}
                 </div>
 
                 <div>
                   <label className="label !text-mist/60">Password</label>
-                  <input
-                    type="password"
-                    className="input !bg-field-950 !border-mist/15 !text-mist"
-                    placeholder="At least 6 characters"
-                    {...register("password", {
-                      required: "Password is required",
-                      minLength: { value: 6, message: "Minimum 6 characters" },
-                    })}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className="input !bg-field-950 !border-mist/15 !text-mist pr-10"
+                      placeholder="At least 6 characters"
+                      {...register("password", {
+                        required: "Password is required",
+                        minLength: { value: 6, message: "Minimum 6 characters" },
+                        onChange: clearError,
+                      })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-mist/40 hover:text-mist focus:outline-none"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                   {errors.password && <p className="mt-1 text-xs text-alert">{errors.password.message}</p>}
                 </div>
 
                 <div>
                   <label className="label !text-mist/60">Confirm password</label>
-                  <input
-                    type="password"
-                    className="input !bg-field-950 !border-mist/15 !text-mist"
-                    placeholder="Repeat password"
-                    {...register("confirm_password", {
-                      required: "Please confirm your password",
-                      validate: (v) => v === watch("password") || "Passwords do not match",
-                    })}
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      className="input !bg-field-950 !border-mist/15 !text-mist pr-10"
+                      placeholder="Repeat password"
+                      {...register("confirm_password", {
+                        required: "Please confirm your password",
+                        validate: (v) => v === watch("password") || "Passwords do not match",
+                        onChange: clearError,
+                      })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-mist/40 hover:text-mist focus:outline-none"
+                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                   {errors.confirm_password && (
                     <p className="mt-1 text-xs text-alert">{errors.confirm_password.message}</p>
                   )}
@@ -157,7 +267,7 @@ export default function Register() {
 
                 <button type="submit" disabled={submitting} className="btn-primary w-full">
                   {submitting && <Loader2 size={16} className="animate-spin" />}
-                  Create account
+                  {submitting ? "Creating account..." : "Create account"}
                 </button>
               </form>
             </>
@@ -168,6 +278,17 @@ export default function Register() {
                 Enter the 6-digit code sent to <span className="text-mist">{email}</span>.
               </p>
 
+              {errorMessage && (
+                <div
+                  id="otp-error-alert"
+                  role="alert"
+                  className="mt-4 flex items-start gap-2.5 rounded-lg border border-alert/30 bg-alert/10 p-3 text-xs text-alert"
+                >
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span className="leading-relaxed">{errorMessage}</span>
+                </div>
+              )}
+
               <form onSubmit={onVerify} className="mt-6 space-y-4">
                 <div>
                   <label className="label !text-mist/60">OTP code</label>
@@ -176,14 +297,17 @@ export default function Register() {
                     placeholder="000000"
                     maxLength={6}
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => {
+                      clearError();
+                      setOtp(e.target.value.replace(/\D/g, ""));
+                    }}
                     required
                   />
                 </div>
 
                 <button type="submit" disabled={submitting || otp.length < 4} className="btn-primary w-full">
                   {submitting && <Loader2 size={16} className="animate-spin" />}
-                  Verify & continue
+                  {submitting ? "Verifying..." : "Verify & continue"}
                 </button>
 
                 <button

@@ -1,10 +1,11 @@
+from datetime import datetime, timezone
 import re
 
 import numpy as np
 import pandas as pd
 from fastapi import HTTPException
 
-from .model_loader import model, encoders, model_metadata
+from .model_loader import model, encoders, model_metadata, risk_calibrator
 from .utils import calculate_risk
 
 
@@ -174,10 +175,6 @@ def build_features(data) -> pd.DataFrame:
         "Rainfall_Category": rainfall,
     }])
 
-
-from datetime import datetime, timezone
-from .model_loader import model, encoders, model_metadata, risk_calibrator
-from .utils import calculate_risk
 
 
 def calculate_calibrated_confidence(pest_value: float, risk_level: str) -> float:

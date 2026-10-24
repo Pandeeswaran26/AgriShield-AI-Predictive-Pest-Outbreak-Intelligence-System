@@ -111,6 +111,7 @@ def _ensure_db_migrations(target_engine):
             existing_user_cols = {col["name"] for col in inspector.get_columns("users")}
             user_cols_to_add = [
                 ("phone", "VARCHAR"),
+                ("is_verified", "BOOLEAN DEFAULT FALSE"),
             ]
             with target_engine.connect() as conn:
                 for col_name, col_type in user_cols_to_add:
@@ -155,6 +156,7 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:3000",
     ],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -11,8 +11,6 @@ import {
 } from "recharts";
 import {
   ScanLine,
-  ArrowRight,
-  Sparkles,
   MapPin,
   CloudSun,
   Thermometer,
@@ -27,11 +25,8 @@ import {
   Sprout,
   Plus,
   Compass,
-  AlertTriangle,
-  CheckCircle2,
   Clock,
 } from "lucide-react";
-import StatCard from "../components/StatCard";
 import RiskBadge from "../components/RiskBadge";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlantModal from "../components/PlantModal";
@@ -48,7 +43,6 @@ export default function Dashboard() {
 
   const [summary, setSummary] = useState(null);
   const [fields, setFields] = useState([]);
-  const [latestPrediction, setLatestPrediction] = useState(null);
   const [pestTrend, setPestTrend] = useState([]);
   const [cropAnalysis, setCropAnalysis] = useState([]);
   const [weatherSnapshot, setWeatherSnapshot] = useState(null);
@@ -72,14 +66,12 @@ export default function Dashboard() {
     Promise.all([
       dashboardService.getSummary().catch(() => null),
       dashboardService.getFieldsOverview().catch(() => []),
-      dashboardService.getLatestPrediction().catch(() => null),
       dashboardService.getPestTrend().catch(() => []),
       dashboardService.getCropAnalysis().catch(() => []),
     ])
-      .then(([s, f, latest, p, c]) => {
+      .then(([s, f, p, c]) => {
         setSummary(s);
         setFields(Array.isArray(f) ? f : []);
-        setLatestPrediction(latest);
         setPestTrend(p);
         setCropAnalysis(c);
       })

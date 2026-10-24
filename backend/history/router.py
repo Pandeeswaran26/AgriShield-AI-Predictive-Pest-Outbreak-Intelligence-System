@@ -20,7 +20,7 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
@@ -78,8 +78,7 @@ class FarmerActionResponse(BaseModel):
     performed_at: Optional[datetime]
     created_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FollowUpCreate(BaseModel):

@@ -1,10 +1,14 @@
 import io
 from datetime import datetime
 
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 from sqlalchemy.orm import Session
 
 from history.models import PredictionHistory
@@ -12,6 +16,9 @@ from recommendation.service import _match_pest_rules, _URGENCY_BY_RISK
 
 
 def generate_prediction_report(db: Session, prediction_id: int):
+    if not REPORTLAB_AVAILABLE:
+        raise RuntimeError("PDF report generation requires 'reportlab'. Please install it using '.venv/Scripts/pip install reportlab'.")
+
     record = (
         db.query(PredictionHistory)
         .filter(PredictionHistory.id == prediction_id)

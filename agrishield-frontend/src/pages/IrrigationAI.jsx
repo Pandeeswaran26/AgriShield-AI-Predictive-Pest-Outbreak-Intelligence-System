@@ -6,10 +6,8 @@ import {
   Wind,
   CloudRain,
   Leaf,
-  BarChart2,
   CheckCircle2,
   AlertTriangle,
-  XCircle,
   Loader2,
   Sprout,
   Sun,
@@ -17,7 +15,6 @@ import {
   Info,
   Clock,
   Zap,
-  TriangleAlert,
   ChevronRight,
 } from "lucide-react";
 
@@ -223,6 +220,7 @@ export default function IrrigationAI() {
     const [min, max] = selectedCrop?.days ?? [1, 200];
     if (cropDays > max) setCropDays(max);
     if (cropDays < min) setCropDays(min);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [crop]);
 
   const rc = result ? riskColors[result.risk_level] ?? riskColors.Medium : null;

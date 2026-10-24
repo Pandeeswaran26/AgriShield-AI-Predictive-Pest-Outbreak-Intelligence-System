@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Send, Bot, User, Loader2, Sparkles, Sprout, Bug, Wind } from "lucide-react";
+import { Send, Bot, User, Loader2, Sparkles } from "lucide-react";
 import * as assistantService from "../services/assistantService";
 
 const WELCOME = {

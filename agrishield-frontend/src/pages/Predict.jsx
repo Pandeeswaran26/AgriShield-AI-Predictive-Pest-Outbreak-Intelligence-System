@@ -1,45 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Loader2,
   ScanLine,
   MapPin,
-  Sparkles,
-  CloudSun,
-  FileDown,
   ClipboardList,
-  Navigation,
   Thermometer,
-  CloudRain,
-  Wind,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  Droplets,
-  Layers,
   Plus,
   Edit3,
-  Trash2,
   Search,
-  Check,
-  Sun,
-  Waves,
   ArrowRight,
-  ShieldCheck,
   Compass,
   Calendar,
   Camera,
   ShieldAlert,
   Sprout,
   Activity,
-  FlaskConical,
 } from "lucide-react";
 
 import RiskBadge from "../components/RiskBadge";
-import PestRankCard from "../components/PestRankCard";
 import ForecastRiskChart from "../components/ForecastRiskChart";
-import SmartAdvisory from "../components/SmartAdvisory";
 import PlantModal from "../components/PlantModal";
 
 import * as predictService from "../services/predictService";
@@ -50,14 +31,12 @@ import * as diagnosisService from "../services/diagnosisService";
 export default function Predict() {
   const [searchParams] = useSearchParams();
   const plantIdParam = searchParams.get("plantId");
-  const navigate = useNavigate();
 
   // ----------------------------------------------------
   // 1. Plant State & Management
   // ----------------------------------------------------
   const [plants, setPlants] = useState([]);
   const [selectedPlantId, setSelectedPlantId] = useState(plantIdParam ? Number(plantIdParam) : null);
-  const [plantsLoading, setPlantsLoading] = useState(true);
 
   // Plant Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,9 +47,7 @@ export default function Predict() {
   // ----------------------------------------------------
   const [coords, setCoords] = useState({ lat: 10.787, lon: 79.1378 }); // default Thanjavur
   const [locationName, setLocationName] = useState("Thanjavur, Tamil Nadu");
-  const [locationStatus, setLocationStatus] = useState("default");
   const [locationLoading, setLocationLoading] = useState(false);
-  const [locationError, setLocationError] = useState("");
 
   // Search autocomplete state
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,8 +60,6 @@ export default function Predict() {
   // 3. Live Weather State
   // ----------------------------------------------------
   const [currentWeather, setCurrentWeather] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
-  const [weatherError, setWeatherError] = useState("");
 
   // ----------------------------------------------------
   // 4. Foliar Diagnosis Attachment
@@ -104,6 +79,7 @@ export default function Predict() {
   useEffect(() => {
     loadPlants();
     loadRecentDiagnoses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Close search dropdown on click outside
@@ -122,10 +98,10 @@ export default function Predict() {
     if (coords && coords.lat != null && coords.lon != null) {
       fetchLiveWeather(coords.lat, coords.lon, locationName);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coords.lat, coords.lon]);
 
   const loadPlants = async () => {
-    setPlantsLoading(true);
     try {
       const data = await plantService.getPlants();
       const list = Array.isArray(data) ? data : [];
@@ -136,8 +112,6 @@ export default function Predict() {
       }
     } catch {
       toast.error("Failed to load registered fields");
-    } finally {
-      setPlantsLoading(false);
     }
   };
 
@@ -167,20 +141,17 @@ export default function Predict() {
   // ----------------------------------------------------
   const detectGPSLocation = () => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser.");
-      setLocationStatus("denied");
+      toast.error("Geolocation is not supported by your browser.");
       return;
     }
 
     setLocationLoading(true);
-    setLocationError("");
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = Number(pos.coords.latitude.toFixed(4));
         const lon = Number(pos.coords.longitude.toFixed(4));
         setCoords({ lat, lon });
-        setLocationStatus("gps");
 
         try {
           const snapshot = await weatherService.getWeatherForCoordinates(lat, lon);
@@ -196,8 +167,6 @@ export default function Predict() {
       },
       () => {
         setLocationLoading(false);
-        setLocationStatus("denied");
-        setLocationError("GPS permission denied. Please search your city/field below.");
         toast.error("GPS access denied. Using manual search.");
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
@@ -205,8 +174,6 @@ export default function Predict() {
   };
 
   const fetchLiveWeather = async (lat, lon, label = "") => {
-    setWeatherLoading(true);
-    setWeatherError("");
     try {
       const snapshot = await weatherService.getWeatherForCoordinates(lat, lon);
       setCurrentWeather(snapshot.weather || null);
@@ -214,9 +181,7 @@ export default function Predict() {
         setLocationName(snapshot.location.name);
       }
     } catch {
-      setWeatherError("Weather telemetry could not be retrieved for these coordinates.");
-    } finally {
-      setWeatherLoading(false);
+      // Quiet fallback
     }
   };
 
